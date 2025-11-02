@@ -6,6 +6,105 @@ import PDFViewer from "@/components/pdf-viewer"
 import FuseButton from "@/components/fuse-button"
 import FusedChecklistDisplay from "@/components/fused-checklist-display"
 
+// Transform webhook response to match display component format
+function transformWebhookResponse(data: any) {
+  if (!data.checklist_unifiee) return { sections: {}, subsections: {}, points_fusionnes: [] }
+
+  // Create lookup map for fusion data by question text
+  const fusionMapByQuestion: Record<string, any> = {}
+  const fusionMapById: Record<string, any> = {}
+
+  if (data.points_fusionnes) {
+    data.points_fusionnes.forEach((fusion: any) => {
+      // Map by question text (most reliable)
+      if (fusion.fusion_resultat?.question) {
+        fusionMapByQuestion[fusion.fusion_resultat.question] = fusion
+      }
+
+      // Map by ID suffix (removing FUSION.fusion. prefix)
+      if (fusion.fusion_resultat?.id) {
+        const idSuffix = fusion.fusion_resultat.id.replace(/^FUSION\.fusion\./, "")
+        fusionMapById[idSuffix] = fusion
+      }
+    })
+  }
+
+  // Group items by section and subsection
+  const sections: Record<string, { subsections: Record<string, any[]> }> = {}
+
+  data.checklist_unifiee.forEach((item: any) => {
+    const sectionKey = item.section || "Other"
+    const subsectionKey = item.sous_section || "General"
+
+    if (!sections[sectionKey]) {
+      sections[sectionKey] = { subsections: {} }
+    }
+    if (!sections[sectionKey].subsections[subsectionKey]) {
+      sections[sectionKey].subsections[subsectionKey] = []
+    }
+
+    // Find fusion data for this item (try question match first, then ID match)
+    let fusionData = fusionMapByQuestion[item.question]
+
+    // If not found by question, try matching by ID suffix
+    if (!fusionData) {
+      // Try direct ID match
+      fusionData = fusionMapById[item.id]
+
+      // If still not found, try removing section prefix from item ID
+      if (!fusionData) {
+        const idParts = item.id.split(".")
+        if (idParts.length > 2) {
+          // Try matching without section prefix (e.g., "publicite_conforme..." without "D.publicite.")
+          const shortId = idParts.slice(2).join(".")
+          fusionData = fusionMapById[shortId]
+        }
+      }
+    }
+
+    // Extract original CH and BS texts
+    let original_ch = ""
+    let original_bs = ""
+
+    if (fusionData?.equivalents) {
+      const chEquivalents = fusionData.equivalents.filter((eq: any) => eq.source === "CH")
+      const bsEquivalents = fusionData.equivalents.filter((eq: any) => eq.source === "BS")
+
+      original_ch = chEquivalents.map((eq: any) => eq.texte).join(" ; ")
+      original_bs = bsEquivalents.map((eq: any) => eq.texte).join(" ; ")
+    }
+
+    // If no fusion data, use the item itself as source
+    if (!fusionData) {
+      if (item.origine?.includes("CH")) {
+        original_ch = item.question
+      }
+      if (item.origine?.includes("BS")) {
+        original_bs = item.question
+      }
+    }
+
+    sections[sectionKey].subsections[subsectionKey].push({
+      id: item.id,
+      question: item.question,
+      sous_section: item.sous_section,
+      origine: item.origine || [],
+      selected: item.selected || "fusion",
+      fused_text: item.question,
+      original_ch,
+      original_bs,
+      fusion_id: fusionData?.fusion_id,
+      choices: fusionData?.choices || ["fusion", "keep_source_CH", "keep_source_BS", "keep_both"],
+    })
+  })
+
+  return {
+    sections,
+    points_fusionnes: data.points_fusionnes || [],
+    raw: data,
+  }
+}
+
 export default function Home() {
   const [doc1File, setDoc1File] = useState<File | null>(null)
   const [doc2File, setDoc2File] = useState<File | null>(null)
@@ -45,6 +144,10 @@ export default function Home() {
       formData.append("doc1", doc1File)
       formData.append("doc2", doc2File)
 
+      console.log("[v0] Sending request to webhook...")
+      console.log("[v0] File 1:", doc1File.name, doc1File.size, "bytes")
+      console.log("[v0] File 2:", doc2File.name, doc2File.size, "bytes")
+
       const response = await fetch("https://karim.n8nkk.tech/webhook-test/8a1abe39-1ef4-4ec9-b9ab-8915c4b38dd6", {
         method: "POST",
         body: formData,
@@ -54,12 +157,25 @@ export default function Home() {
         },
       })
 
+      console.log("[v0] Response status:", response.status)
+      console.log("[v0] Response headers:", Object.fromEntries(response.headers.entries()))
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorText = await response.text()
+        console.error("[v0] Error response:", errorText)
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
       }
 
-      const data = await response.json()
-      setFusedData(data)
+      const responseText = await response.text()
+      console.log("[v0] Response body:", responseText)
+
+      const rawData = responseText ? JSON.parse(responseText) : {}
+
+      // Transform the data to match the expected format
+      const transformedData = transformWebhookResponse(rawData)
+      console.log("[v0] Transformed data:", transformedData)
+
+      setFusedData(transformedData)
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to fuse documents. Check webhook URL and CORS settings."
@@ -74,27 +190,27 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-full px-8 py-6">
-          <h1 className="text-3xl font-bold text-slate-900">Certification Checklist Fuser</h1>
-          <p className="text-slate-600 mt-1">Upload two certification checklists and merge them with AI intelligence</p>
+        <div className="max-w-full px-4 py-3">
+          <h1 className="text-2xl font-bold text-slate-900">Certification Checklist Fuser</h1>
+          <p className="text-slate-600 text-sm">Upload two certification checklists and merge them with AI intelligence</p>
         </div>
       </div>
 
       {/* Error Banner */}
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mx-8 mt-4">
-          <p className="text-red-700">{error}</p>
+        <div className="bg-red-50 border-l-4 border-red-500 p-3 mx-4 mt-2">
+          <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
 
       {/* Main Content */}
-      <div className="p-8">
-        <div className="grid grid-cols-3 gap-6 h-[calc(100vh-220px)]">
+      <div className="p-4">
+        <div className="grid grid-cols-3 gap-4 h-[calc(100vh-140px)]">
           {/* Left Panel - Document 1 */}
           <div className="bg-white rounded-lg shadow-md border border-slate-200 overflow-hidden flex flex-col">
-            <div className="bg-blue-50 border-b border-blue-200 px-6 py-4">
-              <h2 className="text-lg font-semibold text-blue-900">Document 1</h2>
-              <p className="text-sm text-blue-700 mt-1">Upload first checklist</p>
+            <div className="bg-blue-50 border-b border-blue-200 px-4 py-2">
+              <h2 className="text-base font-semibold text-blue-900">Document 1</h2>
+              <p className="text-xs text-blue-700">Upload first checklist</p>
             </div>
             {!doc1File ? (
               <DocumentUploader onUpload={handleDoc1Upload} label="Drop PDF here" />
@@ -107,9 +223,9 @@ export default function Home() {
 
           {/* Center Panel - Fused Checklist */}
           <div className="bg-white rounded-lg shadow-md border border-slate-200 overflow-hidden flex flex-col">
-            <div className="bg-green-50 border-b border-green-200 px-6 py-4">
-              <h2 className="text-lg font-semibold text-green-900">Fused Checklist</h2>
-              <p className="text-sm text-green-700 mt-1">AI-merged result</p>
+            <div className="bg-green-50 border-b border-green-200 px-4 py-2">
+              <h2 className="text-base font-semibold text-green-900">Fused Checklist</h2>
+              <p className="text-xs text-green-700">AI-merged result</p>
             </div>
             {fusedData ? (
               <FusedChecklistDisplay data={fusedData} setFusedData={setFusedData} />
@@ -135,9 +251,9 @@ export default function Home() {
 
           {/* Right Panel - Document 2 */}
           <div className="bg-white rounded-lg shadow-md border border-slate-200 overflow-hidden flex flex-col">
-            <div className="bg-red-50 border-b border-red-200 px-6 py-4">
-              <h2 className="text-lg font-semibold text-red-900">Document 2</h2>
-              <p className="text-sm text-red-700 mt-1">Upload second checklist</p>
+            <div className="bg-red-50 border-b border-red-200 px-4 py-2">
+              <h2 className="text-base font-semibold text-red-900">Document 2</h2>
+              <p className="text-xs text-red-700">Upload second checklist</p>
             </div>
             {!doc2File ? (
               <DocumentUploader onUpload={handleDoc2Upload} label="Drop PDF here" />
@@ -150,7 +266,7 @@ export default function Home() {
         </div>
 
         {/* Fuse Button */}
-        <div className="mt-6 flex justify-center">
+        <div className="mt-3 flex justify-center">
           <FuseButton isDisabled={!doc1File || !doc2File || loading} isLoading={loading} onClick={handleFuse} />
         </div>
       </div>

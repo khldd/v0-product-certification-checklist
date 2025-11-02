@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import type { PDFDocumentProxy } from "pdfjs-dist"
 
 interface PDFViewerProps {
   file: File
@@ -9,46 +10,76 @@ interface PDFViewerProps {
 export default function PDFViewer({ file }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number>(0)
   const [currentPage, setCurrentPage] = useState<number>(1)
-  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null)
+  const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        setPdfData(e.target.result as ArrayBuffer)
-      }
-    }
-    reader.onerror = () => {
-      setError("Failed to read file")
-    }
-    reader.readAsArrayBuffer(file)
-  }, [file])
-
-  useEffect(() => {
-    if (!pdfData) return
+    let cancelled = false
 
     const loadPDF = async () => {
       try {
         const pdfjsLib = await import("pdfjs-dist")
-        const workerSrc = await import("pdfjs-dist/build/pdf.worker.min.mjs")
 
-        pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc.default
+        // Set worker source to local file in public directory
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
 
-        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise
-        setNumPages(pdf.numPages)
-        setCurrentPage(1)
-        setLoading(false)
+        const reader = new FileReader()
+
+        reader.onload = async (e) => {
+          if (cancelled) return
+
+          if (e.target?.result) {
+            try {
+              const arrayBuffer = e.target.result as ArrayBuffer
+              const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+
+              if (cancelled) {
+                pdf.destroy()
+                return
+              }
+
+              setPdfDoc(pdf)
+              setNumPages(pdf.numPages)
+              setCurrentPage(1)
+              setLoading(false)
+            } catch (err) {
+              if (cancelled) return
+              console.error("[v0] Error loading PDF:", err)
+              setError("Failed to load PDF")
+              setLoading(false)
+            }
+          }
+        }
+
+        reader.onerror = () => {
+          if (cancelled) return
+          setError("Failed to read file")
+          setLoading(false)
+        }
+
+        reader.readAsArrayBuffer(file)
       } catch (err) {
-        console.error("[v0] Error loading PDF:", err)
-        setError("Failed to load PDF")
+        if (cancelled) return
+        console.error("[v0] Error importing PDF.js:", err)
+        setError("Failed to initialize PDF viewer")
         setLoading(false)
       }
     }
 
     loadPDF()
-  }, [pdfData])
+
+    // Cleanup function to destroy PDF document and cancel operations
+    return () => {
+      cancelled = true
+      setPdfDoc((prevDoc) => {
+        if (prevDoc) {
+          prevDoc.destroy()
+        }
+        return null
+      })
+    }
+  }, [file])
 
   const handlePrevPage = () => {
     setCurrentPage((prev) => Math.max(1, prev - 1))
@@ -92,7 +123,7 @@ export default function PDFViewer({ file }: PDFViewerProps) {
     <div className="flex flex-col h-full">
       {/* PDF Canvas Container */}
       <div className="flex-1 overflow-auto bg-slate-100 flex items-center justify-center p-4">
-        <PDFPage pdfData={pdfData} pageNumber={currentPage} />
+        <PDFPage pdfDoc={pdfDoc} pageNumber={currentPage} />
       </div>
 
       {/* Navigation Controls */}
@@ -129,46 +160,84 @@ export default function PDFViewer({ file }: PDFViewerProps) {
   )
 }
 
-function PDFPage({ pdfData, pageNumber }: { pdfData: ArrayBuffer | null; pageNumber: number }) {
+function PDFPage({ pdfDoc, pageNumber }: { pdfDoc: PDFDocumentProxy | null; pageNumber: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const renderTaskRef = useRef<any>(null)
 
   useEffect(() => {
-    if (!pdfData || !canvasRef.current) return
+    if (!pdfDoc || !canvasRef.current) return
+
+    const canvas = canvasRef.current
+    let cancelled = false
 
     const renderPage = async () => {
       try {
-        const pdfjsLib = await import("pdfjs-dist")
-        const workerSrc = await import("pdfjs-dist/build/pdf.worker.min.mjs")
+        // Cancel any ongoing render task
+        if (renderTaskRef.current) {
+          renderTaskRef.current.cancel()
+          renderTaskRef.current = null
+        }
 
-        pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc.default
+        // Wait a tick to ensure previous render is fully cancelled
+        await new Promise((resolve) => setTimeout(resolve, 0))
 
-        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise
-        const page = await pdf.getPage(pageNumber)
+        if (cancelled || !canvas) return
+
+        const page = await pdfDoc.getPage(pageNumber)
+
+        if (cancelled) return
 
         const viewport = page.getViewport({ scale: 1.5 })
-        const canvas = canvasRef.current
+
+        // Clear the canvas before rendering
+        const context = canvas.getContext("2d")
+        if (!context) return
+
         canvas.width = viewport.width
         canvas.height = viewport.height
+        context.clearRect(0, 0, canvas.width, canvas.height)
+
+        if (cancelled) return
 
         const renderContext = {
-          canvasContext: canvas.getContext("2d")!,
+          canvasContext: context,
           viewport: viewport,
         }
 
-        await page.render(renderContext).promise
-      } catch (err) {
-        console.error("[v0] Error rendering page:", err)
+        renderTaskRef.current = page.render(renderContext)
+        await renderTaskRef.current.promise
+
+        if (!cancelled) {
+          renderTaskRef.current = null
+        }
+      } catch (err: any) {
+        // Ignore cancelled render errors
+        if (err?.name === "RenderingCancelledException") {
+          return
+        }
+        if (!cancelled) {
+          console.error("[v0] Error rendering page:", err)
+        }
       }
     }
 
     renderPage()
-  }, [pdfData, pageNumber])
+
+    // Cleanup function to cancel render on unmount or when dependencies change
+    return () => {
+      cancelled = true
+      if (renderTaskRef.current) {
+        renderTaskRef.current.cancel()
+        renderTaskRef.current = null
+      }
+    }
+  }, [pdfDoc, pageNumber])
 
   return (
     <canvas
       ref={canvasRef}
       className="max-w-full max-h-full shadow-lg bg-white"
-      style={{ maxWidth: "100%", maxHeight: "calc(100vh - 300px)" }}
+      style={{ maxWidth: "100%", maxHeight: "calc(100vh - 200px)" }}
     />
   )
 }
