@@ -21,8 +21,8 @@ export default function PDFViewer({ file }: PDFViewerProps) {
       try {
         const pdfjsLib = await import("pdfjs-dist")
 
-        // Set worker source to local file in public directory
-        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
+        // Use unpkg CDN as a reliable source
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
 
         const reader = new FileReader()
 
@@ -204,7 +204,7 @@ function PDFPage({ pdfDoc, pageNumber }: { pdfDoc: PDFDocumentProxy | null; page
           viewport: viewport,
         }
 
-        renderTaskRef.current = page.render(renderContext)
+        renderTaskRef.current = page.render(renderContext as any)
         await renderTaskRef.current.promise
 
         if (!cancelled) {

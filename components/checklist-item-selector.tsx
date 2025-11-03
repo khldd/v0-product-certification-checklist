@@ -8,8 +8,7 @@ interface ChecklistItemSelectorProps {
     id: string
     question: string
     fused_text: string
-    original_ch: string
-    original_bs: string
+    original_texts?: Record<string, string>
     origine: string[]
     sous_section: string
   }
@@ -30,34 +29,65 @@ export default function ChecklistItemSelector({
   const [isEditing, setIsEditing] = useState(false)
   const [showOriginals, setShowOriginals] = useState(false)
 
+  // Get all unique source names
+  const sources = item.origine || []
+  const originalTexts = item.original_texts || {}
+
   // Determine what text to show based on selection
   const getDisplayText = () => {
     if (editedText) return editedText
 
-    switch (selectedOption) {
-      case "fusion":
-        return item.fused_text || item.question
-      case "keep_source_CH":
-        return item.original_ch || item.fused_text || item.question
-      case "keep_source_BS":
-        return item.original_bs || item.fused_text || item.question
-      case "keep_both":
-        const bsText = item.original_bs || ""
-        const chText = item.original_ch || ""
-        if (bsText && chText) {
-          return `BS: ${bsText}\n\nCH: ${chText}`
-        } else if (bsText) {
-          return `BS: ${bsText}`
-        } else if (chText) {
-          return `CH: ${chText}`
-        }
-        return item.fused_text || item.question
-      default:
-        return item.fused_text || item.question
+    if (selectedOption === "fusion") {
+      return item.fused_text || item.question
     }
+
+    // Check if selection matches a specific source
+    const matchedSource = sources.find((src) => selectedOption === `keep_source_${src}`)
+    if (matchedSource && originalTexts[matchedSource]) {
+      return originalTexts[matchedSource]
+    }
+
+    // Handle "keep_both" or "keep_all" - show all sources
+    if (selectedOption === "keep_both" || selectedOption === "keep_all") {
+      const allTexts = sources
+        .filter((src) => originalTexts[src])
+        .map((src) => `${src}: ${originalTexts[src]}`)
+        .join("\n\n")
+      return allTexts || item.fused_text || item.question
+    }
+
+    return item.fused_text || item.question
   }
 
   const displayText = getDisplayText()
+
+  // Helper to get badge color for source
+  const getSourceBadgeColor = (source: string) => {
+    // Hash the source name to get a consistent color
+    let hash = 0
+    for (let i = 0; i < source.length; i++) {
+      hash = source.charCodeAt(i) + ((hash << 5) - hash)
+    }
+    const colors = [
+      { bg: "bg-blue-100", text: "text-blue-700" },
+      { bg: "bg-green-100", text: "text-green-700" },
+      { bg: "bg-purple-100", text: "text-purple-700" },
+      { bg: "bg-orange-100", text: "text-orange-700" },
+      { bg: "bg-pink-100", text: "text-pink-700" },
+      { bg: "bg-indigo-100", text: "text-indigo-700" },
+    ]
+    return colors[Math.abs(hash) % colors.length]
+  }
+
+  // Helper to get short name for source
+  const getShortName = (source: string) => {
+    // Try to extract acronym or shorten long names
+    if (source.length <= 10) return source
+    
+    // Extract uppercase letters as acronym
+    const acronym = source.match(/[A-Z]/g)?.join("") || source.substring(0, 8)
+    return acronym.length > 2 ? acronym : source.substring(0, 10)
+  }
 
   return (
     <div className="border-b border-slate-200 hover:bg-slate-50 transition">
@@ -87,14 +117,21 @@ export default function ChecklistItemSelector({
           )}
 
           {/* Source Badges */}
-          <div className="flex items-center gap-2 mt-1">
-            {item.origine.includes("CH") && (
-              <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">CH</span>
-            )}
-            {item.origine.includes("BS") && (
-              <span className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded">BS</span>
-            )}
-            {(item.original_ch || item.original_bs) && (
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            {sources.map((source) => {
+              const colors = getSourceBadgeColor(source)
+              const shortName = getShortName(source)
+              return (
+                <span
+                  key={source}
+                  className={`text-xs px-1.5 py-0.5 ${colors.bg} ${colors.text} rounded`}
+                  title={source}
+                >
+                  {shortName}
+                </span>
+              )
+            })}
+            {Object.keys(originalTexts).length > 0 && (
               <button
                 onClick={() => setShowOriginals(!showOriginals)}
                 className="text-xs text-blue-600 hover:text-blue-800 underline"
@@ -105,20 +142,17 @@ export default function ChecklistItemSelector({
           </div>
 
           {/* Original Sources (Expandable) */}
-          {showOriginals && (item.original_ch || item.original_bs) && (
+          {showOriginals && Object.keys(originalTexts).length > 0 && (
             <div className="mt-2 space-y-1 text-xs">
-              {item.original_ch && (
-                <div className="p-2 bg-blue-50 border border-blue-200 rounded">
-                  <span className="font-semibold text-blue-900">CH: </span>
-                  <span className="text-blue-700">{item.original_ch}</span>
-                </div>
-              )}
-              {item.original_bs && (
-                <div className="p-2 bg-green-50 border border-green-200 rounded">
-                  <span className="font-semibold text-green-900">BS: </span>
-                  <span className="text-green-700">{item.original_bs}</span>
-                </div>
-              )}
+              {Object.entries(originalTexts).map(([source, text]) => {
+                const colors = getSourceBadgeColor(source)
+                return (
+                  <div key={source} className={`p-2 ${colors.bg} border border-slate-300 rounded`}>
+                    <span className={`font-semibold ${colors.text}`}>{source}: </span>
+                    <span className={colors.text}>{text}</span>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
@@ -136,42 +170,39 @@ export default function ChecklistItemSelector({
             <span className="text-slate-700">Fused</span>
           </label>
 
-          {item.original_ch && (
-            <label className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 px-2 py-1 rounded">
-              <input
-                type="radio"
-                name={`select-${itemId}`}
-                checked={selectedOption === "keep_source_CH"}
-                onChange={() => onSelectOption("keep_source_CH")}
-                className="w-3 h-3"
-              />
-              <span className="text-slate-700">CH</span>
-            </label>
-          )}
+          {sources.map((source) => {
+            const optionValue = `keep_source_${source}`
+            const shortName = getShortName(source)
+            if (!originalTexts[source]) return null
+            
+            return (
+              <label
+                key={source}
+                className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 px-2 py-1 rounded"
+                title={source}
+              >
+                <input
+                  type="radio"
+                  name={`select-${itemId}`}
+                  checked={selectedOption === optionValue}
+                  onChange={() => onSelectOption(optionValue)}
+                  className="w-3 h-3"
+                />
+                <span className="text-slate-700">{shortName}</span>
+              </label>
+            )
+          })}
 
-          {item.original_bs && (
+          {sources.length > 1 && Object.keys(originalTexts).length > 1 && (
             <label className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 px-2 py-1 rounded">
               <input
                 type="radio"
                 name={`select-${itemId}`}
-                checked={selectedOption === "keep_source_BS"}
-                onChange={() => onSelectOption("keep_source_BS")}
-                className="w-3 h-3"
-              />
-              <span className="text-slate-700">BS</span>
-            </label>
-          )}
-
-          {item.original_ch && item.original_bs && (
-            <label className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 px-2 py-1 rounded">
-              <input
-                type="radio"
-                name={`select-${itemId}`}
-                checked={selectedOption === "keep_both"}
+                checked={selectedOption === "keep_both" || selectedOption === "keep_all"}
                 onChange={() => onSelectOption("keep_both")}
                 className="w-3 h-3"
               />
-              <span className="text-slate-700">Both</span>
+              <span className="text-slate-700">All</span>
             </label>
           )}
         </div>

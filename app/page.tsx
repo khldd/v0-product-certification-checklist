@@ -16,14 +16,33 @@ function transformWebhookResponse(data: any) {
 
   if (data.points_fusionnes) {
     data.points_fusionnes.forEach((fusion: any) => {
-      // Map by question text (most reliable)
-      if (fusion.fusion_resultat?.question) {
-        fusionMapByQuestion[fusion.fusion_resultat.question] = fusion
+      // Handle both old and new formats
+      let fusionQuestion = ""
+      let fusionId = ""
+
+      // New format: fusion_resultat is a string, target_id is separate
+      if (typeof fusion.fusion_resultat === "string") {
+        fusionQuestion = fusion.fusion_resultat
+        fusionId = fusion.target_id || ""
+      }
+      // Old format: fusion_resultat is an object with question and id
+      else if (fusion.fusion_resultat?.question) {
+        fusionQuestion = fusion.fusion_resultat.question
+        fusionId = fusion.fusion_resultat.id || ""
       }
 
-      // Map by ID suffix (removing FUSION.fusion. prefix)
-      if (fusion.fusion_resultat?.id) {
-        const idSuffix = fusion.fusion_resultat.id.replace(/^FUSION\.fusion\./, "")
+      // Map by question text (most reliable)
+      if (fusionQuestion) {
+        fusionMapByQuestion[fusionQuestion] = fusion
+      }
+
+      // Map by ID (handle various ID formats)
+      if (fusionId) {
+        // Store with full ID
+        fusionMapById[fusionId] = fusion
+        
+        // Also store with ID suffix (removing prefixes like "FUSION.fusion." or section prefixes)
+        const idSuffix = fusionId.replace(/^FUSION\.fusion\./, "").replace(/^[a-z]\./i, "")
         fusionMapById[idSuffix] = fusion
       }
     })
@@ -62,26 +81,31 @@ function transformWebhookResponse(data: any) {
       }
     }
 
-    // Extract original CH and BS texts
-    let original_ch = ""
-    let original_bs = ""
+    // Extract original texts from all sources dynamically
+    const originalTexts: Record<string, string> = {}
 
     if (fusionData?.equivalents) {
-      const chEquivalents = fusionData.equivalents.filter((eq: any) => eq.source === "CH")
-      const bsEquivalents = fusionData.equivalents.filter((eq: any) => eq.source === "BS")
-
-      original_ch = chEquivalents.map((eq: any) => eq.texte).join(" ; ")
-      original_bs = bsEquivalents.map((eq: any) => eq.texte).join(" ; ")
+      fusionData.equivalents.forEach((eq: any) => {
+        if (eq.source && eq.texte) {
+          if (!originalTexts[eq.source]) {
+            originalTexts[eq.source] = eq.texte
+          } else {
+            originalTexts[eq.source] += " ; " + eq.texte
+          }
+        }
+      })
     }
 
-    // If no fusion data, use the item itself as source
-    if (!fusionData) {
-      if (item.origine?.includes("CH")) {
-        original_ch = item.question
-      }
-      if (item.origine?.includes("BS")) {
-        original_bs = item.question
-      }
+    // If no fusion data but we have origines, try to find the original texts
+    if (Object.keys(originalTexts).length === 0 && item.origine && item.origine.length > 0) {
+      item.origine.forEach((source: string) => {
+        originalTexts[source] = item.question
+      })
+    }
+
+    // Debug log to see what's being extracted
+    if (fusionData && Object.keys(originalTexts).length > 0) {
+      console.log(`[v0] Item "${item.question.substring(0, 50)}..." has ${Object.keys(originalTexts).length} original texts:`, Object.keys(originalTexts))
     }
 
     sections[sectionKey].subsections[subsectionKey].push({
@@ -91,8 +115,7 @@ function transformWebhookResponse(data: any) {
       origine: item.origine || [],
       selected: item.selected || "fusion",
       fused_text: item.question,
-      original_ch,
-      original_bs,
+      original_texts: originalTexts,
       fusion_id: fusionData?.fusion_id,
       choices: fusionData?.choices || ["fusion", "keep_source_CH", "keep_source_BS", "keep_both"],
     })
