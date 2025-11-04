@@ -171,7 +171,7 @@ export default function Home() {
       console.log("[v0] File 1:", doc1File.name, doc1File.size, "bytes")
       console.log("[v0] File 2:", doc2File.name, doc2File.size, "bytes")
 
-      const response = await fetch("https://karim.n8nkk.tech/webhook-test/8a1abe39-1ef4-4ec9-b9ab-8915c4b38dd6", {
+      const response = await fetch("https://karim.n8nkk.tech/webhook/8a1abe39-1ef4-4ec9-b9ab-8915c4b38dd6", {
         method: "POST",
         body: formData,
         mode: "cors",
