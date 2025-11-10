@@ -399,7 +399,7 @@ export default function Home() {
         doc2_items: doc2Selected
       }
 
-      const response = await fetch("https://karim.n8nkk.tech/webhook-test/8a1abe39-1ef4-4ec9-b9ab-8915c4b38dd6", {
+      const response = await fetch("https://karim.n8nkk.tech/webhook/8a1abe39-1ef4-4ec9-b9ab-8915c4b38dd6", {
         method: "POST",
         mode: "cors",
         headers: {
