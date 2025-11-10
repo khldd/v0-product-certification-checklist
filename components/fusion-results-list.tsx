@@ -217,11 +217,94 @@ export default function FusionResultsList({ results, onClear }: FusionResultsLis
                     </div>
                   )}
 
-                  {/* Kept Separate Reason */}
-                  {result.type === 'kept_separate' && result.reason && (
-                    <div className="bg-orange-50 p-2 rounded border border-orange-200">
-                      <div className="text-xs font-semibold text-orange-800 mb-1">Reason:</div>
-                      <div className="text-xs text-slate-600">{result.reason}</div>
+                  {/* Kept Separate - Show Both Items */}
+                  {result.type === 'kept_separate' && (
+                    <div className="space-y-3">
+                      {/* Doc 1 Items */}
+                      <div className="bg-blue-50 p-3 rounded border border-blue-300">
+                        <div className="text-xs font-semibold text-blue-800 mb-2">Document 1 Items</div>
+                        {result.doc1_items.map((item: any, idx: number) => (
+                          <div key={idx} className="bg-white p-2 rounded border border-blue-200 mb-2 last:mb-0">
+                            {item.section && (
+                              <div className="text-xs font-semibold text-blue-900 mb-1">{item.section}</div>
+                            )}
+                            <div className="text-sm text-slate-700 font-medium mb-1">
+                              {item.question || item.label || '(No question)'}
+                            </div>
+                            {item.status && (
+                              <div className="mb-1">
+                                <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded border border-blue-300">
+                                  {item.status}
+                                </span>
+                              </div>
+                            )}
+                            {item.options && item.options.length > 0 && (
+                              <div className="mt-2">
+                                <div className="text-xs font-semibold text-slate-600 mb-1">Options:</div>
+                                <div className="space-y-1">
+                                  {item.options.map((opt: any, optIdx: number) => (
+                                    <div key={optIdx} className="text-xs text-slate-600 pl-2 border-l-2 border-blue-300">
+                                      {opt.label || opt.text || opt}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {item.notes && (
+                              <div className="mt-2 text-xs text-slate-600 bg-yellow-50 p-1 rounded border border-yellow-200">
+                                {item.notes}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Doc 2 Items */}
+                      <div className="bg-red-50 p-3 rounded border border-red-300">
+                        <div className="text-xs font-semibold text-red-800 mb-2">Document 2 Items</div>
+                        {result.doc2_items.map((item: any, idx: number) => (
+                          <div key={idx} className="bg-white p-2 rounded border border-red-200 mb-2 last:mb-0">
+                            {item.section && (
+                              <div className="text-xs font-semibold text-red-900 mb-1">{item.section}</div>
+                            )}
+                            <div className="text-sm text-slate-700 font-medium mb-1">
+                              {item.question || item.label || '(No question)'}
+                            </div>
+                            {item.status && (
+                              <div className="mb-1">
+                                <span className="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded border border-red-300">
+                                  {item.status}
+                                </span>
+                              </div>
+                            )}
+                            {item.options && item.options.length > 0 && (
+                              <div className="mt-2">
+                                <div className="text-xs font-semibold text-slate-600 mb-1">Options:</div>
+                                <div className="space-y-1">
+                                  {item.options.map((opt: any, optIdx: number) => (
+                                    <div key={optIdx} className="text-xs text-slate-600 pl-2 border-l-2 border-red-300">
+                                      {opt.label || opt.text || opt}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {item.notes && (
+                              <div className="mt-2 text-xs text-slate-600 bg-yellow-50 p-1 rounded border border-yellow-200">
+                                {item.notes}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Reason for keeping separate */}
+                      {result.reason && (
+                        <div className="bg-orange-50 p-2 rounded border border-orange-200">
+                          <div className="text-xs font-semibold text-orange-800 mb-1">Reason:</div>
+                          <div className="text-xs text-slate-600">{result.reason}</div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

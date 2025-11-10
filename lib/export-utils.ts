@@ -70,17 +70,104 @@ export function exportFusionResultsAsPDF(results: FusionResult[], filename: stri
     yPosition += 12
 
     if (result.type === 'kept_separate') {
-      // Show separate items
+      // Show both separate items with full details
       doc.setFontSize(10)
-      doc.setFont('helvetica', 'italic')
-      doc.text(`Items kept separate - ${result.doc1_items.length + result.doc2_items.length} total items`, 20, yPosition)
-      yPosition += 7
+      doc.setFont('helvetica', 'bold')
+      doc.text('Document 1 Items:', 20, yPosition)
+      yPosition += 6
+      
+      // Doc 1 items
+      result.doc1_items.forEach((item: any, idx: number) => {
+        doc.setFontSize(9)
+        doc.setFont('helvetica', 'bold')
+        if (item.section) {
+          doc.text(`${item.section}`, 25, yPosition)
+          yPosition += 5
+        }
+        
+        doc.setFont('helvetica', 'normal')
+        if (item.question) {
+          const questionLines = doc.splitTextToSize(item.question, pageWidth - 50)
+          doc.text(questionLines, 25, yPosition)
+          yPosition += questionLines.length * 4 + 2
+        }
+        
+        if (item.status) {
+          doc.setFontSize(8)
+          doc.text(`Status: ${item.status}`, 25, yPosition)
+          yPosition += 4
+        }
+        
+        if (item.options && item.options.length > 0) {
+          doc.setFontSize(8)
+          doc.text('Options:', 25, yPosition)
+          yPosition += 4
+          item.options.forEach((opt: any) => {
+            const optLabel = opt.label || opt.text || opt
+            doc.text(`• ${optLabel}`, 30, yPosition)
+            yPosition += 3
+          })
+          yPosition += 2
+        }
+        
+        yPosition += 3
+      })
+      
+      yPosition += 3
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Document 2 Items:', 20, yPosition)
+      yPosition += 6
+      
+      // Doc 2 items
+      result.doc2_items.forEach((item: any, idx: number) => {
+        doc.setFontSize(9)
+        doc.setFont('helvetica', 'bold')
+        if (item.section) {
+          doc.text(`${item.section}`, 25, yPosition)
+          yPosition += 5
+        }
+        
+        doc.setFont('helvetica', 'normal')
+        if (item.question) {
+          const questionLines = doc.splitTextToSize(item.question, pageWidth - 50)
+          doc.text(questionLines, 25, yPosition)
+          yPosition += questionLines.length * 4 + 2
+        }
+        
+        if (item.status) {
+          doc.setFontSize(8)
+          doc.text(`Status: ${item.status}`, 25, yPosition)
+          yPosition += 4
+        }
+        
+        if (item.options && item.options.length > 0) {
+          doc.setFontSize(8)
+          doc.text('Options:', 25, yPosition)
+          yPosition += 4
+          item.options.forEach((opt: any) => {
+            const optLabel = opt.label || opt.text || opt
+            doc.text(`• ${optLabel}`, 30, yPosition)
+            yPosition += 3
+          })
+          yPosition += 2
+        }
+        
+        yPosition += 3
+      })
       
       if (result.reason) {
+        yPosition += 2
+        doc.setFontSize(9)
+        doc.setFont('helvetica', 'italic')
+        doc.setTextColor(150, 75, 0)
+        doc.text('Reason for keeping separate:', 20, yPosition)
+        yPosition += 5
+        doc.setTextColor(0, 0, 0)
         doc.setFontSize(8)
-        const reasonLines = doc.splitTextToSize(`Reason: ${result.reason}`, pageWidth - 40)
-        doc.text(reasonLines, 20, yPosition)
-        yPosition += reasonLines.length * 5
+        const reasonLines = doc.splitTextToSize(result.reason, pageWidth - 40)
+        doc.text(reasonLines, 25, yPosition)
+        yPosition += reasonLines.length * 4 + 3
       }
     } else if (result.merged_item) {
       // Show merged item details
