@@ -1,0 +1,644 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "auto-fusion-batch",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c98cd0f4-56cd-4796-9be9-8d954832f674",
+      "name": "Webhook",
+      "webhookId": "ffeac932-6ebf-459a-aa98-79bd971c378f"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * FIXED N8N Code Node: Flatten Nested Checklist Items (v2)\n *\n * PASTE THIS INTO YOUR \"Flatten Items\" NODE IN N8N WORKFLOW 3\n *\n * FIX: Access data from input.body (webhook format)\n */\n\nconst input = $input.first().json\n\nconsole.log('[Flatten] Received input:', JSON.stringify(input).substring(0, 200))\n\n// FIX: Access data from body property (webhook format)\nconst webhookBody = input.body || input\nconsole.log('[Flatten] Using data from:', input.body ? 'input.body' : 'input directly')\n\n/**\n * Flatten nested sections structure to flat array of items\n */\nfunction flattenChecklist(data) {\n  const flatItems = []\n\n  if (!data || !Array.isArray(data)) {\n    console.error('[Flatten] Invalid data format - expected array, got:', typeof data)\n    return flatItems\n  }\n\n  console.log('[Flatten] Processing array with', data.length, 'elements')\n\n  // Handle the format: [{ sections: [...] }]\n  for (const docWrapper of data) {\n    console.log('[Flatten] Processing document wrapper:', typeof docWrapper)\n\n    // Extract sections array from wrapper\n    const sections = docWrapper.sections || docWrapper\n\n    console.log('[Flatten] Sections type:', typeof sections, 'isArray:', Array.isArray(sections))\n\n    if (!Array.isArray(sections)) {\n      console.warn('[Flatten] Sections is not an array, skipping')\n      continue\n    }\n\n    console.log('[Flatten] Found', sections.length, 'sections')\n\n    // Iterate through sections\n    for (const section of sections) {\n      if (!section.items || !Array.isArray(section.items)) {\n        console.warn('[Flatten] Section has no items array:', section.letter)\n        continue\n      }\n\n      console.log('[Flatten] Section', section.letter, 'has', section.items.length, 'items')\n\n      // Flatten items from this section\n      for (const item of section.items) {\n        const flatItem = {\n          // Copy all original fields\n          ...item,\n\n          // Add section info (critical for matching)\n          section: section.title ? `${section.letter}. ${section.title}` : section.letter,\n          section_letter: section.letter,\n          section_title: section.title,\n\n          // Normalize field names for consistency\n          question: item.label || item.question || item.text,\n          sous_section: item.subsection || item.sous_section,\n\n          // Ensure ID exists\n          id: item.id || `${section.letter}.${Math.random().toString(36).substr(2, 9)}`\n        }\n\n        flatItems.push(flatItem)\n      }\n    }\n  }\n\n  console.log('[Flatten] Flattened to', flatItems.length, 'total items')\n  return flatItems\n}\n\n// Flatten both documents - ACCESS FROM BODY\nconst doc1Items = flattenChecklist(webhookBody.doc1_all_items || [])\nconst doc2Items = flattenChecklist(webhookBody.doc2_all_items || [])\n\nconsole.log(`[Flatten] FINAL: Doc 1: ${doc1Items.length} items, Doc 2: ${doc2Items.length} items`)\n\n// Validation with better error message\nif (doc1Items.length === 0 || doc2Items.length === 0) {\n  console.error('[Flatten] ERROR: Empty results!')\n  console.error('[Flatten] Input structure:', JSON.stringify({\n    has_body: !!input.body,\n    doc1_type: typeof webhookBody.doc1_all_items,\n    doc1_length: webhookBody.doc1_all_items?.length,\n    doc2_type: typeof webhookBody.doc2_all_items,\n    doc2_length: webhookBody.doc2_all_items?.length\n  }))\n  throw new Error(`Missing items - Doc1: ${doc1Items.length}, Doc2: ${doc2Items.length}`)\n}\n\n// Output flattened data\nreturn [{\n  json: {\n    doc1_items: doc1Items,\n    doc2_items: doc2Items,\n    doc1_count: doc1Items.length,\n    doc2_count: doc2Items.length,\n    total_count: doc1Items.length + doc2Items.length,\n    flattened_at: new Date().toISOString()\n  }\n}]\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "43eb63be-fcc0-4e3c-9a48-42a34878d4df",
+      "name": "Flatten Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * FIXED: Section-Agnostic Matcher for n8n\n *\n * FIXED: Considers ALL possible pairs regardless of section!\n * Sections DON'T matter - an item from section A can match items from B, C, etc.\n *\n * Input: $json (from webhook)\n *   - doc1_all_items: Array of items from document 1\n *   - doc2_all_items: Array of items from document 2\n *\n * Output: Array of promising item pairs based on TEXT SIMILARITY ONLY\n */\n\n// Get input data (supports both flatten node output and direct webhook format)\nconst inputData = $input.first().json;\nconst doc1Items = inputData.doc1_items || inputData.doc1_all_items || [];\nconst doc2Items = inputData.doc2_items || inputData.doc2_all_items || [];\n\nconsole.log(`[Section-Agnostic Matcher] Analyzing ${doc1Items.length} items from Doc1 and ${doc2Items.length} items from Doc2`);\nconsole.log(`[Section-Agnostic Matcher] Total possible pairs: ${doc1Items.length * doc2Items.length}`);\n\n// Helper: Calculate text similarity score (0-1)\nfunction calculateTextSimilarity(text1, text2) {\n  if (!text1 || !text2) return 0;\n\n  const words1 = text1.toLowerCase().split(/\\s+/).filter(w => w.length > 3);\n  const words2 = text2.toLowerCase().split(/\\s+/).filter(w => w.length > 3);\n\n  if (words1.length === 0 || words2.length === 0) return 0;\n\n  const set1 = new Set(words1);\n  const set2 = new Set(words2);\n  const intersection = new Set([...set1].filter(x => set2.has(x)));\n\n  const similarity = (2 * intersection.size) / (set1.size + set2.size);\n  return similarity;\n}\n\n// Helper: Calculate match score (TEXT ONLY - sections ignored!)\nfunction calculateMatchScore(item1, item2) {\n  const questionText1 = item1.question || item1.label || '';\n  const questionText2 = item2.question || item2.label || '';\n\n  // Text similarity (100% weight - sections don't matter!)\n  const textSimilarity = calculateTextSimilarity(questionText1, questionText2);\n\n  return {\n    score: textSimilarity,\n    textSimilarity\n  };\n}\n\n// Main processing\nconst matchedPairs = [];\nconst matchThreshold = 0.25; // Lowered threshold to catch more potential matches\nconst maxMatchesPerItem = 5; // Keep top 5 matches per doc1 item (increased from 3)\n\n// FIXED: Consider ALL possible pairs - no section filtering!\ndoc1Items.forEach((item1, idx1) => {\n  const matches = [];\n\n  // Check EVERY doc2 item against this doc1 item\n  doc2Items.forEach((item2, idx2) => {\n    const matchResult = calculateMatchScore(item1, item2);\n\n    if (matchResult.score >= matchThreshold) {\n      matches.push({\n        doc1_item: { ...item1, _index: idx1 },\n        doc2_item: { ...item2, _index: idx2 },\n        match_score: Math.round(matchResult.score * 100) / 100,\n        details: {\n          text_similarity: Math.round(matchResult.textSimilarity * 100)\n        }\n      });\n    }\n  });\n\n  // Keep top N matches per doc1 item\n  matches.sort((a, b) => b.match_score - a.match_score);\n  matchedPairs.push(...matches.slice(0, maxMatchesPerItem));\n\n  if (matches.length > 0) {\n    console.log(`[Section-Agnostic Matcher] Doc1 item ${idx1} has ${matches.length} potential matches (keeping top ${maxMatchesPerItem})`);\n  }\n});\n\n// Remove duplicate pairs (same items matched multiple times)\nconst uniquePairs = [];\nconst pairKeys = new Set();\n\nmatchedPairs.forEach(pair => {\n  const key = `${pair.doc1_item._index}-${pair.doc2_item._index}`;\n  if (!pairKeys.has(key)) {\n    pairKeys.add(key);\n    uniquePairs.push(pair);\n  }\n});\n\n// Sort by match score descending\nuniquePairs.sort((a, b) => b.match_score - a.match_score);\n\nconsole.log(`[Section-Agnostic Matcher] Found ${uniquePairs.length} promising pairs from ${doc1Items.length * doc2Items.length} total combinations`);\nconsole.log(`[Section-Agnostic Matcher] Reduction: ${Math.round((1 - uniquePairs.length / (doc1Items.length * doc2Items.length)) * 100)}%`);\n\n// Return results (n8n format)\nreturn [{\n  json: {\n    matched_pairs: uniquePairs,\n    statistics: {\n      doc1_items_count: doc1Items.length,\n      doc2_items_count: doc2Items.length,\n      total_possible_pairs: doc1Items.length * doc2Items.length,\n      filtered_pairs_count: uniquePairs.length,\n      reduction_percent: Math.round((1 - uniquePairs.length / (doc1Items.length * doc2Items.length)) * 100),\n      match_threshold: matchThreshold,\n      max_matches_per_item: maxMatchesPerItem\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "e8519a02-46fd-4dff-bab3-79e568acda4a",
+      "name": "Section-Agnostic Matcher"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following batch of checklist item pairs and determine which can be fused:\n\n{{JSON.stringify($json.pairs, null, 2)}}\n\nFor each pair:\n1. Evaluate if both items check the same compliance requirement\n2. Consider if they serve the same audit purpose\n3. Determine if merging would preserve all critical information\n4. Assign appropriate confidence score\n\nReturn results as a JSON array with one entry per pair, following the specified format exactly.",
+        "options": {
+          "systemMessage": "# Batch Fusion System Prompt for GPT-4o\n\n## System Prompt\n\n```\nYou are an expert certification checklist analyzer optimized for batch processing. Your task is to analyze multiple pairs of checklist items from two certification documents and determine which can be intelligently fused.\n\nYou will receive a batch of item pairs. For each pair, you must:\n1. Analyze semantic similarity between the items\n2. Determine fusability based on context, meaning, and audit purpose\n3. Create a unified item if fusable, or explain why not\n4. Assign a confidence score (0-100)\n\n## Analysis Criteria\n\n### When Evaluating Similarity:\n- Core requirement or question being verified\n- Section context and audit domain\n- Practical intent (what is being checked)\n- Options/choices (even if worded differently)\n- Compliance standards referenced\n\n### Fusability Rules:\n\n**✅ FUSABLE (return fusable: true) if:**\n- Items verify the same or nearly identical compliance requirement\n- Questions address the same business process or document type\n- Options reflect equivalent compliance states\n- Both serve the same audit purpose\n- Only differences are in wording style, not substance\n- Would satisfy both original requirements when checked\n\n**❌ NOT FUSABLE (return fusable: false) if:**\n- Items check fundamentally different requirements\n- Belong to different audit domains\n- One is a subset/superset (not equivalent)\n- Merging would lose critical compliance distinctions\n- Serve different audit purposes\n- Require separate verification steps\n\n### Confidence Scoring:\n\n- **90-100%**: Virtually identical requirements, obvious fusion candidate\n- **75-89%**: Highly similar, safe to merge with minor semantic differences\n- **60-74%**: Similar but requires careful review of merged text\n- **40-59%**: Some overlap but significant differences, caution advised\n- **0-39%**: Different requirements, should not fuse\n\n## Batch Input Format\n\nYou will receive:\n```json\n{\n  \"pairs\": [\n    {\n      \"doc1_item\": {\n        \"id\": \"...\",\n        \"section\": \"...\",\n        \"sous_section\": \"...\",\n        \"question\": \"...\",\n        \"status\": \"RN/RNE/null\",\n        \"options\": [...],\n        \"notes\": \"...\",\n        \"page\": 1\n      },\n      \"doc2_item\": {\n        \"id\": \"...\",\n        \"section\": \"...\",\n        \"sous_section\": \"...\",\n        \"question\": \"...\",\n        \"status\": \"RN/RNE/null\",\n        \"options\": [...],\n        \"notes\": \"...\",\n        \"page\": 2\n      }\n    }\n    // ... more pairs (up to 15)\n  ]\n}\n```\n\n## Required Output Format\n\nReturn a JSON array with one result per pair:\n\n```json\n[\n  {\n    \"fusable\": true,\n    \"confidence\": 85,\n    \"explanation\": \"Brief explanation of why items can/cannot be fused (1-2 sentences)\",\n    \"merged_item\": {\n      \"id\": \"fusion.auto_generated_id\",\n      \"section\": \"Unified section name\",\n      \"sous_section\": \"Unified subsection if applicable\",\n      \"question\": \"Clear, concise merged question preserving all key requirements\",\n      \"status\": \"RN/RNE/null (keep most restrictive)\",\n      \"options\": [\n        {\n          \"label\": \"Unified option text\",\n          \"source\": \"doc1/doc2/both\",\n          \"original_doc1\": \"original doc1 wording\",\n          \"original_doc2\": \"original doc2 wording\",\n          \"checked\": null\n        }\n      ],\n      \"notes\": \"Doc1: [notes] | Doc2: [notes]\",\n      \"page\": \"doc1: X, doc2: Y\",\n      \"sources\": {\n        \"doc1\": {\"id\": \"...\", \"section\": \"...\", \"question\": \"...\"},\n        \"doc2\": {\"id\": \"...\", \"section\": \"...\", \"question\": \"...\"}\n      }\n    }\n  },\n  {\n    \"fusable\": false,\n    \"confidence\": 30,\n    \"explanation\": \"Items address different requirements...\",\n    \"merged_item\": null\n  }\n  // ... one result per input pair\n]\n```\n\n## Important Rules\n\n1. **Process ALL pairs**: Return exactly one result per input pair\n2. **Maintain order**: Result order must match input pair order\n3. **Be conservative**: If unsure, set fusable: false with confidence < 60\n4. **Preserve information**: Merged items must not lose critical details\n5. **Track sources**: Always include full source tracking in merged items\n6. **Explain decisions**: Provide clear, concise explanations\n7. **Return valid JSON**: Ensure output is properly formatted JSON array\n8. **Handle errors gracefully**: If a pair cannot be processed, mark as unfusable\n\n## Quality Guidelines\n\n- **Merged questions**: Should be clear, grammatically correct, and comprehensive\n- **Option merging**: Combine equivalent options, preserve distinct ones\n- **Section names**: Use most descriptive section name from either source\n- **Status preservation**: Keep most restrictive status (RN over RNE, RNE over null)\n- **Notes combination**: Clearly label and separate notes from each source\n\n## Performance Optimization (GPT-4o)\n\n- Leverage your parallel processing capabilities for batch analysis\n- Use pattern matching for common certification terminology\n- Apply domain knowledge about audit requirements\n- Maintain consistency in confidence scoring across the batch\n- Process efficiently without sacrificing quality\n\n## Example Mini-Batch\n\n**Input:**\n```json\n{\n  \"pairs\": [\n    {\n      \"doc1_item\": {\n        \"id\": \"a.1\",\n        \"section\": \"A. Licensing\",\n        \"question\": \"License contract exists and is signed\",\n        \"status\": \"RN\"\n      },\n      \"doc2_item\": {\n        \"id\": \"b.3\",\n        \"section\": \"B. Documentation\",\n        \"question\": \"Valid signed license contract\",\n        \"status\": \"RN\"\n      }\n    },\n    {\n      \"doc1_item\": {\n        \"id\": \"a.2\",\n        \"section\": \"A. General\",\n        \"question\": \"BEB-Excel form attached to admission audit\",\n        \"status\": \"RN\"\n      },\n      \"doc2_item\": {\n        \"id\": \"b.4\",\n        \"section\": \"B. Products\",\n        \"question\": \"All Migros-Bio products are certified\",\n        \"status\": \"RNE\"\n      }\n    }\n  ]\n}\n```\n\n**Output:**\n```json\n[\n  {\n    \"fusable\": true,\n    \"confidence\": 92,\n    \"explanation\": \"Both items verify the existence and validity of a signed license contract. Same requirement, different wording.\",\n    \"merged_item\": {\n      \"id\": \"fusion.a.license_contract\",\n      \"section\": \"A. Licensing / Documentation\",\n      \"question\": \"License contract exists, is valid, and signed\",\n      \"status\": \"RN\",\n      \"sources\": {\n        \"doc1\": {\"id\": \"a.1\", \"section\": \"A. Licensing\", \"question\": \"License contract exists and is signed\"},\n        \"doc2\": {\"id\": \"b.3\", \"section\": \"B. Documentation\", \"question\": \"Valid signed license contract\"}\n      }\n    }\n  },\n  {\n    \"fusable\": false,\n    \"confidence\": 15,\n    \"explanation\": \"Items address completely different requirements: operational forms (doc1) vs product certification (doc2). Different domains and audit purposes.\",\n    \"merged_item\": null\n  }\n]\n```\n\nNow process the provided batch of pairs and return your analysis.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "18840c58-116a-445f-92c2-b1bfda6a36fb",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        704,
+        208
+      ],
+      "id": "c4368ad0-8f58-4225-b21f-ac4cf7856b97",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "PGujgtefWOLJHqCG",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Parse Batch Fusion Results for n8n\n *\n * Parses AI Agent output for batch fusion analysis and structures results.\n * Handles multiple fusion decisions in a single batch.\n *\n * Input: $json (from AI Agent)\n *   - output: AI agent response (JSON string or object)\n *   - batch_number: Current batch number\n *   - batch_id: Batch identifier\n *\n * Output: Array of structured fusion results\n */\n\n// Get input data\nconst aiOutput = $input.item.json.output || $input.item.json;\nconst batchNumber = $input.item.json.batch_number || 1;\nconst batchId = $input.item.json.batch_id || `batch_${Date.now()}`;\nconst originalPairs = $input.item.json.pairs || []; // Get original pairs from batch\n\nconsole.log(`[Batch Parser] Processing batch #${batchNumber} (${batchId})`);\nconsole.log(`[Batch Parser] Original pairs count: ${originalPairs.length}`);\n\n// Helper: Parse AI output (might be string or object)\nfunction parseAIOutput(output) {\n  if (typeof output === 'string') {\n    try {\n      // Try to parse as JSON\n      return JSON.parse(output);\n    } catch (e) {\n      console.log(`[Batch Parser] Failed to parse as JSON, trying to extract JSON from text`);\n      // Try to extract JSON from markdown code blocks or text\n      const jsonMatch = output.match(/```json\\n([\\s\\S]*?)\\n```/) || output.match(/\\{[\\s\\S]*\\}/);\n      if (jsonMatch) {\n        try {\n          return JSON.parse(jsonMatch[1] || jsonMatch[0]);\n        } catch (e2) {\n          console.error(`[Batch Parser] Could not extract valid JSON from AI output`);\n          return null;\n        }\n      }\n      return null;\n    }\n  }\n  return output;\n}\n\n// Helper: Calculate confidence level from score\nfunction getConfidenceLevel(score) {\n  if (score >= 90) return 'very_high';\n  if (score >= 75) return 'high';\n  if (score >= 60) return 'medium';\n  if (score >= 40) return 'low';\n  return 'very_low';\n}\n\n// Helper: Determine if fusion should auto-apply\nfunction shouldAutoApply(fusable, confidence) {\n  return fusable && confidence >= 80;\n}\n\n// Parse the AI output\nconst parsedOutput = parseAIOutput(aiOutput);\n\nif (!parsedOutput) {\n  console.error(`[Batch Parser] Failed to parse AI output for batch #${batchNumber}`);\n  return [{\n    json: {\n      batch_number: batchNumber,\n      batch_id: batchId,\n      success: false,\n      error: 'Failed to parse AI output',\n      fusion_results: []\n    }\n  }];\n}\n\n// Extract fusion results (AI might return single or array)\nlet fusionResults = [];\n\nif (Array.isArray(parsedOutput)) {\n  fusionResults = parsedOutput;\n} else if (parsedOutput.fusion_results || parsedOutput.fusions) {\n  fusionResults = parsedOutput.fusion_results || parsedOutput.fusions;\n} else if (parsedOutput.fusable !== undefined) {\n  // Single fusion result\n  fusionResults = [parsedOutput];\n} else {\n  console.error(`[Batch Parser] Unexpected AI output format for batch #${batchNumber}`);\n  fusionResults = [];\n}\n\nconsole.log(`[Batch Parser] Found ${fusionResults.length} fusion results in batch #${batchNumber}`);\n\n// Structure each fusion result\nconst structuredResults = fusionResults.map((result, index) => {\n  const fusable = result.fusable || result.can_fuse || false;\n  const confidence = result.confidence || result.confidence_score || 0;\n  const confidenceLevel = result.confidence_level || getConfidenceLevel(confidence);\n\n  // Generate unique fusion ID\n  const fusionId = result.fusion_id || `fusion_${batchNumber}_${index}_${Date.now()}`;\n\n  // Extract source items from original pairs (results are in same order as pairs)\n  const originalPair = originalPairs[index];\n  const doc1Items = originalPair?.doc1_item ? [originalPair.doc1_item] : [];\n  const doc2Items = originalPair?.doc2_item ? [originalPair.doc2_item] : [];\n\n  // Structure the result\n  return {\n    fusion_id: fusionId,\n    batch_number: batchNumber,\n    batch_id: batchId,\n    timestamp: new Date().toISOString(),\n\n    // Fusion decision\n    fusion_decision: {\n      can_fuse: fusable,\n      confidence_score: confidence,\n      confidence_level: confidenceLevel,\n      should_auto_apply: shouldAutoApply(fusable, confidence),\n      explanation: result.explanation || result.reason || 'No explanation provided'\n    },\n\n    // Result data\n    result: {\n      status: fusable ? 'fused' : 'not_fusable',\n      merged_item: fusable ? (result.merged_item || result.fused_item || null) : null,\n      action: fusable\n        ? 'Use this fused item to represent both original items'\n        : 'Keep items separate - they represent different requirements'\n    },\n\n    // Source items - FIXED: Extract from original pairs\n    doc1_items: doc1Items,\n    doc2_items: doc2Items,\n\n    // Metadata\n    metadata: {\n      ai_agent: 'batch-fusion-analyzer',\n      model: 'gpt-4o',\n      processed_at: new Date().toISOString(),\n      batch_info: {\n        batch_number: batchNumber,\n        batch_id: batchId\n      }\n    }\n  };\n});\n\n// Calculate batch statistics\nconst fusableCount = structuredResults.filter(r => r.fusion_decision.can_fuse).length;\nconst notFusableCount = structuredResults.length - fusableCount;\nconst avgConfidence = structuredResults.length > 0\n  ? Math.round(structuredResults.reduce((sum, r) => sum + r.fusion_decision.confidence_score, 0) / structuredResults.length)\n  : 0;\n\nconsole.log(`[Batch Parser] Batch #${batchNumber} summary:`);\nconsole.log(`  - Total results: ${structuredResults.length}`);\nconsole.log(`  - Fusable: ${fusableCount}`);\nconsole.log(`  - Not fusable: ${notFusableCount}`);\nconsole.log(`  - Avg confidence: ${avgConfidence}%`);\n\n// Return all results from this batch\nreturn [{\n  json: {\n    batch_number: batchNumber,\n    batch_id: batchId,\n    success: true,\n    fusion_results: structuredResults,\n    batch_statistics: {\n      total_results: structuredResults.length,\n      fusable_count: fusableCount,\n      not_fusable_count: notFusableCount,\n      average_confidence: avgConfidence,\n      high_confidence_count: structuredResults.filter(r => r.fusion_decision.confidence_score >= 70).length\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        0
+      ],
+      "id": "f735bb61-62b3-4c24-b097-0ffb90bbf70f",
+      "name": "Parse Results"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        0
+      ],
+      "id": "6510eae3-0c43-4430-9641-3bcc346d0ab3",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * FIXED: Filter High Confidence Fusions for n8n\n *\n * PASTE THIS INTO YOUR \"Filter High Confidence\" NODE IN N8N WORKFLOW 3\n *\n * FIX: Properly unwraps Aggregate node output (handles data array wrapper)\n *\n * Filters fusion results to only include those with confidence >= 55%\n * Aggregates results from all batches and provides final statistics.\n *\n * Input: Array of batch results (from Aggregate node)\n * Output: Filtered and aggregated fusion results\n */\n\n// Get all input items (from Aggregate node)\nconst allBatchResults = $input.all();\n\nconsole.log(`[High Confidence Filter] Processing results from ${allBatchResults.length} items`);\n\n// Configuration\nconst CONFIDENCE_THRESHOLD = 55;\n\n// Aggregate all fusion results from all batches\nconst allFusionResults = [];\nlet totalProcessed = 0;\nlet totalFusable = 0;\nlet totalNotFusable = 0;\n\nallBatchResults.forEach((batchItem, index) => {\n  let batchData = batchItem.json;\n\n  // FIX: Unwrap Aggregate node's data array wrapper\n  if (batchData.data && Array.isArray(batchData.data) && batchData.data.length > 0) {\n    console.log(`[High Confidence Filter] Item ${index + 1}: Unwrapping Aggregate data array`);\n    batchData = batchData.data[0]; // Unwrap from { data: [{ ... }] }\n  }\n\n  console.log(`[High Confidence Filter] Item ${index + 1}: success=${batchData.success}, has fusion_results=${!!batchData.fusion_results}`);\n\n  if (batchData.success && batchData.fusion_results) {\n    allFusionResults.push(...batchData.fusion_results);\n    totalProcessed += batchData.fusion_results.length;\n    totalFusable += batchData.batch_statistics?.fusable_count || 0;\n    totalNotFusable += batchData.batch_statistics?.not_fusable_count || 0;\n\n    console.log(`[High Confidence Filter] Batch ${index + 1}: ${batchData.fusion_results.length} results`);\n  } else {\n    console.warn(`[High Confidence Filter] Batch ${index + 1} had no results or failed`);\n  }\n});\n\nconsole.log(`[High Confidence Filter] Total fusion results before filtering: ${allFusionResults.length}`);\n\n// Filter for high confidence (>= 55%)\nconst highConfidenceFusions = allFusionResults.filter(result => {\n  const confidence = result.fusion_decision?.confidence_score || 0;\n  const canFuse = result.fusion_decision?.can_fuse || false;\n\n  // Only include fusable items with high confidence\n  return canFuse && confidence >= CONFIDENCE_THRESHOLD;\n});\n\nconsole.log(`[High Confidence Filter] High confidence fusions (>= ${CONFIDENCE_THRESHOLD}%): ${highConfidenceFusions.length}`);\n\n// Sort by confidence descending\nhighConfidenceFusions.sort((a, b) => {\n  return (b.fusion_decision?.confidence_score || 0) - (a.fusion_decision?.confidence_score || 0);\n});\n\n// Calculate final statistics\nconst confidenceScores = highConfidenceFusions.map(r => r.fusion_decision.confidence_score);\nconst avgConfidence = confidenceScores.length > 0\n  ? Math.round(confidenceScores.reduce((a, b) => a + b, 0) / confidenceScores.length)\n  : 0;\n\nconst veryHighConfidence = highConfidenceFusions.filter(r => r.fusion_decision.confidence_score >= 90).length;\nconst highConfidence = highConfidenceFusions.filter(r => r.fusion_decision.confidence_score >= 75 && r.fusion_decision.confidence_score < 90).length;\n\n// Group by sections for better overview\nconst bySection = {};\nhighConfidenceFusions.forEach(fusion => {\n  const section = fusion.result?.merged_item?.section || 'Unknown Section';\n  if (!bySection[section]) {\n    bySection[section] = [];\n  }\n  bySection[section].push(fusion);\n});\n\nconst summary = {\n  total_pairs_analyzed: totalProcessed,\n  total_fusable: totalFusable,\n  total_not_fusable: totalNotFusable,\n  fusions_found: highConfidenceFusions.length,\n  confidence_threshold: CONFIDENCE_THRESHOLD,\n  average_confidence: avgConfidence,\n  confidence_breakdown: {\n    very_high_90_plus: veryHighConfidence,\n    high_75_to_89: highConfidence,\n    medium_55_to_74: highConfidenceFusions.length - veryHighConfidence - highConfidence\n  },\n  sections_count: Object.keys(bySection).length,\n  processing_timestamp: new Date().toISOString()\n};\n\nconsole.log(`[High Confidence Filter] Final Summary:`);\nconsole.log(`  - Total analyzed: ${summary.total_pairs_analyzed}`);\nconsole.log(`  - High confidence fusions: ${summary.fusions_found}`);\nconsole.log(`  - Average confidence: ${summary.average_confidence}%`);\nconsole.log(`  - Very high (90%+): ${summary.confidence_breakdown.very_high_90_plus}`);\nconsole.log(`  - High (75-89%): ${summary.confidence_breakdown.high_75_to_89}`);\nconsole.log(`  - Medium (55-74%): ${summary.confidence_breakdown.medium_55_to_74}`);\n\n// Return final aggregated results\nreturn [{\n  json: {\n    success: true,\n    auto_fusions: highConfidenceFusions,\n    summary: summary,\n    sections_breakdown: Object.keys(bySection).map(section => ({\n      section_name: section,\n      fusion_count: bySection[section].length,\n      avg_confidence: Math.round(\n        bySection[section].reduce((sum, f) => sum + f.fusion_decision.confidence_score, 0) / bySection[section].length\n      )\n    })).sort((a, b) => b.fusion_count - a.fusion_count)\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        0
+      ],
+      "id": "2185f165-6547-4c44-accf-9fd2f7c9e5bf",
+      "name": "Filter High Confidence"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Batch Creator for n8n\n *\n * Groups matched pairs into optimal batches for AI processing.\n * Target batch size: 15 pairs (configurable)\n *\n * Input: $json (from Smart Section Matcher)\n *   - matched_pairs: Array of matched item pairs\n *   - statistics: Matching statistics\n *\n * Output: Array of batches, each containing up to 15 pairs\n */\n\n// Get input data\nconst inputData = $input.first().json;\nconst matchedPairs = inputData.matched_pairs || [];\nconst statistics = inputData.statistics || {};\n\n// Configuration\nconst BATCH_SIZE = 15; // Optimal size for GPT-4o context window\nconst MAX_BATCHES = 100; // Safety limit\n\nconsole.log(`[Batch Creator] Creating batches from ${matchedPairs.length} matched pairs`);\n\n// Create batches\nconst batches = [];\nlet currentBatch = [];\nlet batchNumber = 1;\n\nmatchedPairs.forEach((pair, index) => {\n  currentBatch.push(pair);\n\n  // When batch is full or this is the last pair\n  if (currentBatch.length === BATCH_SIZE || index === matchedPairs.length - 1) {\n    batches.push({\n      batch_number: batchNumber,\n      batch_size: currentBatch.length,\n      pairs: currentBatch,\n      batch_id: `batch_${batchNumber}_${Date.now()}`\n    });\n\n    currentBatch = [];\n    batchNumber++;\n\n    // Safety check\n    if (batches.length >= MAX_BATCHES) {\n      console.log(`[Batch Creator] WARNING: Reached max batches limit (${MAX_BATCHES})`);\n      return;\n    }\n  }\n});\n\nconsole.log(`[Batch Creator] Created ${batches.length} batches`);\nconsole.log(`[Batch Creator] Batch sizes: ${batches.map(b => b.batch_size).join(', ')}`);\n\n// Return results as multiple items (one per batch) for n8n loop\nreturn batches.map((batch, index) => ({\n  json: {\n    ...batch,\n    total_batches: batches.length,\n    is_first_batch: index === 0,\n    is_last_batch: index === batches.length - 1,\n    original_statistics: statistics,\n    progress_percent: Math.round(((index + 1) / batches.length) * 100)\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "a93129cf-ae06-49c1-b992-7cf4522a8a7f",
+      "name": "Batch Creator"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1808,
+        0
+      ],
+      "id": "bea2612e-1169-4770-ae0c-8e6239f7933e",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Flatten Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten Items": {
+      "main": [
+        [
+          {
+            "node": "Section-Agnostic Matcher",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Section-Agnostic Matcher": {
+      "main": [
+        [
+          {
+            "node": "Batch Creator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Results": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Filter High Confidence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter High Confidence": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Creator": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Webhook": [
+      {
+        "headers": {
+          "host": "karim.n8nkk.tech",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+          "content-length": "7113",
+          "accept": "application/json",
+          "accept-encoding": "gzip, br",
+          "accept-language": "en-US,en;q=0.9,fr;q=0.8,ar;q=0.7",
+          "cdn-loop": "cloudflare; loops=1",
+          "cf-connecting-ip": "102.31.150.48",
+          "cf-ipcountry": "TN",
+          "cf-ray": "99c7d0ea8ddde28a-MRS",
+          "cf-visitor": "{\"scheme\":\"https\"}",
+          "content-type": "application/json",
+          "origin": "http://localhost:3000",
+          "priority": "u=1, i",
+          "referer": "http://localhost:3000/",
+          "sec-ch-ua": "\"Chromium\";v=\"142\", \"Microsoft Edge\";v=\"142\", \"Not_A Brand\";v=\"99\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "cross-site",
+          "x-forwarded-for": "172.70.108.191",
+          "x-forwarded-host": "karim.n8nkk.tech",
+          "x-forwarded-port": "443",
+          "x-forwarded-proto": "https",
+          "x-forwarded-server": "f454a4ade644",
+          "x-real-ip": "172.70.108.191"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "doc1_all_items": [
+            {
+              "sections": [
+                {
+                  "letter": "A",
+                  "title": "Généralités",
+                  "items": [
+                    {
+                      "id": "a.fiche-d-information-y-c-annexe",
+                      "subsection": null,
+                      "label": "Fiche d'information y c. annexe",
+                      "page": 1,
+                      "status": null,
+                      "options": [
+                        {
+                          "label": "est disponible et actuel",
+                          "checked": false
+                        },
+                        {
+                          "label": "n'est plus (complétement) actuel",
+                          "checked": false
+                        }
+                      ],
+                      "references": [
+                        "RNE"
+                      ],
+                      "notes": "Le Formulaire de données d'exploitation pour entreprises de transformation Bio (BEB-Excel) Lors de l'audit d'admission le BEB-Excel doit être joint rempli. L'entreprise doit tenir le BEB à jour.",
+                      "fields": {}
+                    },
+                    {
+                      "id": "a.sur-la-fiche-d-entreprise-les-donnees-lors-de-l-audit",
+                      "subsection": null,
+                      "label": "Sur la fiche d'entreprise, les données lors de l'audit: (Laufblatt - Extrait de la base de données ProCert)",
+                      "page": 1,
+                      "status": null,
+                      "options": [
+                        {
+                          "label": "ont été vérifiées et sont actuelles, resp. complètes",
+                          "checked": false
+                        },
+                        {
+                          "label": "ont été actualisées",
+                          "checked": false
+                        },
+                        {
+                          "label": "ne sont pas actuelles / des indications manquent",
+                          "checked": false
+                        }
+                      ],
+                      "references": [],
+                      "notes": null,
+                      "fields": {}
+                    },
+                    {
+                      "id": "a.le-formulaire-risikoprofil-bio",
+                      "subsection": null,
+                      "label": "Le formulaire « Risikoprofil Bio »",
+                      "page": 1,
+                      "status": null,
+                      "options": [
+                        {
+                          "label": "a été rempli et vérifié par l'auditeur et est joint",
+                          "checked": false
+                        },
+                        {
+                          "label": "n'a pas été rempli ou vérifié par l'auditeur",
+                          "checked": false
+                        }
+                      ],
+                      "references": [],
+                      "notes": "Le profil de risque doit être visé par l'auditeur",
+                      "fields": {}
+                    },
+                    {
+                      "id": "a.l-entreprise-qui-ne-prepare-pas-uniquement-des-produits-biologiques",
+                      "subsection": null,
+                      "label": "L'entreprise qui ne prépare pas uniquement des produits biologiques",
+                      "page": 1,
+                      "status": null,
+                      "options": [
+                        {
+                          "label": "fait au moins mensuellement une opération de transformation bio.",
+                          "checked": false
+                        },
+                        {
+                          "label": "annonce son opération de transformation bio dans un délai déterminé",
+                          "checked": false
+                        },
+                        {
+                          "label": "n'annonce pas son opération de transformation bio dans un délai déterminé",
+                          "checked": false
+                        },
+                        {
+                          "label": "na prépare ou commercialise uniquement des produits biologiques",
+                          "checked": false
+                        }
+                      ],
+                      "references": [],
+                      "notes": "Annonce via produkte@procert.ch au moins 48 h avant l'opération de transformation bio",
+                      "fields": {}
+                    },
+                    {
+                      "id": "a.le-nom-et-l-adresse-de-l-entreprise-figurant-sur-le-certificat",
+                      "subsection": null,
+                      "label": "Le nom et l'adresse de l'entreprise figurant sur le certificat et l'inscription au registre du commerce :",
+                      "page": 1,
+                      "status": null,
+                      "options": [
+                        {
+                          "label": "correspondent",
+                          "checked": false
+                        },
+                        {
+                          "label": "ne correspondent pas",
+                          "checked": false
+                        }
+                      ],
+                      "references": [],
+                      "notes": "Si les données ne concordent pas : noter l'adresse correcte ou joindre un extrait du registre du commerce.",
+                      "fields": {}
+                    },
+                    {
+                      "id": "a.tous-les-sites-et-filiales-figurant-sur-le-certificat-bio",
+                      "subsection": null,
+                      "label": "Tous les sites et filiales figurant sur le certificat bio",
+                      "page": 1,
+                      "status": null,
+                      "options": [
+                        {
+                          "label": "sont mentionnés dans leur intégralité",
+                          "checked": false
+                        },
+                        {
+                          "label": "ne sont pas mentionnés dans leur intégralité",
+                          "checked": false
+                        }
+                      ],
+                      "references": [],
+                      "notes": "Si les sites ne sont pas tous mentionnés, noter les ici avec adresse et activité correspondante ou joindre la liste au dossier.",
+                      "fields": {}
+                    },
+                    {
+                      "id": "a.elements-en-suspens-suite-au-precedent-audit",
+                      "subsection": null,
+                      "label": "Elements en suspens suite au précédent audit",
+                      "page": 1,
+                      "status": null,
+                      "options": [
+                        {
+                          "label": "Aucun",
+                          "checked": false
+                        },
+                        {
+                          "label": "Encore ouverts",
+                          "checked": false
+                        },
+                        {
+                          "label": "Réglés",
+                          "checked": false
+                        }
+                      ],
+                      "references": [
+                        "RNE"
+                      ],
+                      "notes": "Les points en suspens se trouvent sur la « Laufblatt ».",
+                      "fields": {}
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "doc2_all_items": [
+            {
+              "sections": [
+                {
+                  "letter": "A",
+                  "title": "Généralités",
+                  "items": [
+                    {
+                      "id": "a.fiche-d-information-y-c-annexe",
+                      "subsection": null,
+                      "label": "Fiche d'information y c. annexe",
+                      "page": 1,
+                      "status": null,
+                      "options": [
+                        {
+                          "label": "est disponible et actuel",
+                          "checked": false
+                        },
+                        {
+                          "label": "n'est plus (complétement) actuel",
+                          "checked": false
+                        }
+                      ],
+                      "references": [
+                        "RNE"
+                      ],
+                      "notes": "Le Formulaire de données d'exploitation pour entreprises de transformation Bio (BEB-Excel) Lors de l'audit d'admission le BEB-Excel doit être joint rempli. L'entreprise doit tenir le BEB à jour.",
+                      "fields": {}
+                    },
+                    {
+                      "id": "a.sur-la-fiche-d-entreprise-les-donnees-lors-de-l-audit",
+                      "subsection": null,
+                      "label": "Sur la fiche d'entreprise, les données lors de l'audit: (Laufblatt - Extrait de la base de données ProCert)",
+                      "page": 1,
+                      "status": null,
+                      "options": [
+                        {
+                          "label": "ont été vérifiées et sont actuelles, resp. complètes",
+                          "checked": false
+                        },
+                        {
+                          "label": "ont été actualisées",
+                          "checked": false
+                        },
+                        {
+                          "label": "ne sont pas actuelles / des indications manquent",
+                          "checked": false
+                        }
+                      ],
+                      "references": [],
+                      "notes": null,
+                      "fields": {}
+                    },
+                    {
+                      "id": "a.le-formulaire-risikoprofil-bio",
+                      "subsection": null,
+                      "label": "Le formulaire « Risikoprofil Bio »",
+                      "page": 1,
+                      "status": null,
+                      "options": [
+                        {
+                          "label": "a été rempli et vérifié par l'auditeur et est joint",
+                          "checked": false
+                        },
+                        {
+                          "label": "n'a pas été rempli ou vérifié par l'auditeur",
+                          "checked": false
+                        }
+                      ],
+                      "references": [],
+                      "notes": "Le profil de risque doit être visé par l'auditeur",
+                      "fields": {}
+                    },
+                    {
+                      "id": "a.l-entreprise-qui-ne-prepare-pas-uniquement-des-produits-biologiques",
+                      "subsection": null,
+                      "label": "L'entreprise qui ne prépare pas uniquement des produits biologiques",
+                      "page": 1,
+                      "status": null,
+                      "options": [
+                        {
+                          "label": "fait au moins mensuellement une opération de transformation bio.",
+                          "checked": false
+                        },
+                        {
+                          "label": "annonce son opération de transformation bio dans un délai déterminé",
+                          "checked": false
+                        },
+                        {
+                          "label": "n'annonce pas son opération de transformation bio dans un délai déterminé",
+                          "checked": false
+                        },
+                        {
+                          "label": "na prépare ou commercialise uniquement des produits biologiques",
+                          "checked": false
+                        }
+                      ],
+                      "references": [],
+                      "notes": "Annonce via produkte@procert.ch au moins 48 h avant l'opération de transformation bio",
+                      "fields": {}
+                    },
+                    {
+                      "id": "a.le-nom-et-l-adresse-de-l-entreprise-figurant-sur-le-certificat",
+                      "subsection": null,
+                      "label": "Le nom et l'adresse de l'entreprise figurant sur le certificat et l'inscription au registre du commerce :",
+                      "page": 1,
+                      "status": null,
+                      "options": [
+                        {
+                          "label": "correspondent",
+                          "checked": false
+                        },
+                        {
+                          "label": "ne correspondent pas",
+                          "checked": false
+                        }
+                      ],
+                      "references": [],
+                      "notes": "Si les données ne concordent pas : noter l'adresse correcte ou joindre un extrait du registre du commerce.",
+                      "fields": {}
+                    },
+                    {
+                      "id": "a.tous-les-sites-et-filiales-figurant-sur-le-certificat-bio",
+                      "subsection": null,
+                      "label": "Tous les sites et filiales figurant sur le certificat bio",
+                      "page": 1,
+                      "status": null,
+                      "options": [
+                        {
+                          "label": "sont mentionnés dans leur intégralité",
+                          "checked": false
+                        },
+                        {
+                          "label": "ne sont pas mentionnés dans leur intégralité",
+                          "checked": false
+                        }
+                      ],
+                      "references": [],
+                      "notes": "Si les sites ne sont pas tous mentionnés, noter les ici avec adresse et activité correspondante ou joindre la liste au dossier.",
+                      "fields": {}
+                    },
+                    {
+                      "id": "a.elements-en-suspens-suite-au-precedent-audit",
+                      "subsection": null,
+                      "label": "Elements en suspens suite au précédent audit",
+                      "page": 1,
+                      "status": null,
+                      "options": [
+                        {
+                          "label": "Aucun",
+                          "checked": false
+                        },
+                        {
+                          "label": "Encore ouverts",
+                          "checked": false
+                        },
+                        {
+                          "label": "Réglés",
+                          "checked": false
+                        }
+                      ],
+                      "references": [
+                        "RNE"
+                      ],
+                      "notes": "Les points en suspens se trouvent sur la « Laufblatt ».",
+                      "fields": {}
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "webhookUrl": "https://karim.n8nkk.tech/webhook/auto-fusion-batch",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e97e981b4ba241b9fd3480bf994f9f76df42e7c9d265f7e412c77a35e977d66b"
+  }
+}

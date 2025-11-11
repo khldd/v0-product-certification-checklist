@@ -1,0 +1,125 @@
+{
+  "name": "Check list Certification Produits",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        -48
+      ],
+      "id": "2efe7fa6-a3a0-44d2-a10f-e98380b8d2a5",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        288,
+        256
+      ],
+      "id": "836e3005-f9db-47dc-87fb-96ab052de7df",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "PGujgtefWOLJHqCG",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1168,
+        0
+      ],
+      "id": "2cc6bc23-c739-4348-a9f2-908d87887295",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -32,
+        -64
+      ],
+      "id": "40dc2074-8bc1-40b5-b9dd-c1b85945b232",
+      "name": "Webhook",
+      "webhookId": "8a1abe39-1ef4-4ec9-b9ab-8915c4b38dd6"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -48
+      ],
+      "id": "48e3a36b-2d7c-47b4-a30b-2e53de620d32",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d2a6b84d-1e30-4304-b542-8fba5cf210aa",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e97e981b4ba241b9fd3480bf994f9f76df42e7c9d265f7e412c77a35e977d66b"
+  },
+  "id": "PJOU0fv2X47fnmV4",
+  "tags": []
+}

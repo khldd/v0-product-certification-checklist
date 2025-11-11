@@ -1,0 +1,59 @@
+[
+  {
+    "success": true,
+    "timestamp": "2025-11-10T19:24:54.304Z",
+    "fusion_decision": {
+      "can_fuse": true,
+      "confidence_score": 100,
+      "confidence_level": "very_high",
+      "should_auto_apply": true,
+      "explanation": "Both checklist items are completely identical in all parts (ID, section, question, options, notes, and page). They address the same compliance requirement (the presence and currency of the 'fiche d'information' and its annex, specifically the 'BEB-Excel'), belong to the same context, and would have an auditor checking exactly the same document for the same purpose. There are no differences in substance or detail, so they can be fused without any loss of nuance or compliance requirement."
+    },
+    "result": {
+      "status": "fused",
+      "merged_item": {
+        "id": "fusion.a.fiche-d-information-y-c-annexe",
+        "section": "A. Généralités",
+        "sous_section": "",
+        "question": "Fiche d'information y c. annexe",
+        "status": null,
+        "options": [
+          {
+            "label": "est disponible et actuel",
+            "source": "both",
+            "original_doc1": "est disponible et actuel",
+            "original_doc2": "est disponible et actuel",
+            "checked": false
+          },
+          {
+            "label": "n'est plus (complétement) actuel",
+            "source": "both",
+            "original_doc1": "n'est plus (complétement) actuel",
+            "original_doc2": "n'est plus (complétement) actuel",
+            "checked": false
+          }
+        ],
+        "notes": "doc1: Le Formulaire de données d'exploitation pour entreprises de transformation Bio (BEB-Excel) Lors de l'audit d'admission le BEB-Excel doit être joint rempli. L'entreprise doit tenir le BEB à jour.\ndoc2: Le Formulaire de données d'exploitation pour entreprises de transformation Bio (BEB-Excel) Lors de l'audit d'admission le BEB-Excel doit être joint rempli. L'entreprise doit tenir le BEB à jour.",
+        "page": "doc1: 1, doc2: 1",
+        "sources": {
+          "doc1": {
+            "id": "a.fiche-d-information-y-c-annexe",
+            "section": "A. Généralités",
+            "question": "Fiche d'information y c. annexe"
+          },
+          "doc2": {
+            "id": "a.fiche-d-information-y-c-annexe",
+            "section": "A. Généralités",
+            "question": "Fiche d'information y c. annexe"
+          }
+        }
+      },
+      "action": "Use this fused item in the final checklist"
+    },
+    "metadata": {
+      "ai_agent": "checklist-fusion-analyzer",
+      "processed_at": "2025-11-10T19:24:54.304Z",
+      "processing_duration_ms": null
+    }
+  }
+]

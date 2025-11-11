@@ -1,0 +1,121 @@
+{
+  "name": "parse 2 checklists and return result",
+  "nodes": [
+    {
+      "parameters": {
+        "deployment_name": "karim_1762476869900",
+        "include_metrics": false,
+        "include_metadata": false
+      },
+      "type": "n8n-nodes-unstract.unstract",
+      "typeVersion": 1,
+      "position": [
+        32,
+        16
+      ],
+      "id": "854476ed-69ff-494c-b330-ca05be6c54d7",
+      "name": "Unstract1",
+      "credentials": {
+        "unstractApi": {
+          "id": "nqZXxbSBJ6nwQhXv",
+          "name": "Unstract account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        592,
+        16
+      ],
+      "id": "1ebbb410-2f5b-460e-ab08-d1a643edd199",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "2144abe8-5f30-4747-befe-5ac55487fe97",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -208,
+        16
+      ],
+      "id": "ada96d8f-b1c6-4a22-a065-cdda639ad6a1",
+      "name": "Webhook",
+      "webhookId": "2144abe8-5f30-4747-befe-5ac55487fe97"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Input attendu (exemple résumé) :\n * [\n *   [\n *     {\n *       result: {\n *         output: { karim_1: \"```json\\n{ ... }\\n```\" }\n *       }\n *     }\n *   ]\n * ]\n *\n * Sortie : l'objet JSON de karim_1 (un seul item par karim_1 trouvé).\n */\n\nfunction extractKarim1(container) {\n  if (!container) return null;\n\n  // Aplatit récursivement pour retrouver l'objet qui porte result.output.karim_1\n  const flatten = (x) => Array.isArray(x) ? x.flatMap(flatten) : [x];\n  const flat = flatten(container);\n\n  const holder = flat.find(\n    o => o && o.result && o.result.output && typeof o.result.output.karim_1 !== 'undefined'\n  );\n  if (!holder) return null;\n\n  let k1 = holder.result.output.karim_1;\n\n  // Si déjà objet → retourne tel quel\n  if (k1 && typeof k1 === 'object') return k1;\n\n  if (typeof k1 !== 'string') {\n    throw new Error('Le champ karim_1 existe mais n’est ni string ni objet.');\n  }\n\n  // Enlève les fences ```json ... ``` ou ``` ... ```\n  const fenceJson = k1.match(/```json([\\s\\S]*?)```/i);\n  const fenceAny  = k1.match(/```([\\s\\S]*?)```/);\n  let jsonText = fenceJson ? fenceJson[1] : (fenceAny ? fenceAny[1] : k1);\n  jsonText = jsonText.trim();\n\n  // Parse JSON\n  try {\n    return JSON.parse(jsonText);\n  } catch (e) {\n    throw new Error('karim_1 n’est pas un JSON valide : ' + e.message);\n  }\n}\n\nconst out = [];\nfor (const item of $input.all()) {\n  const container = item.json;          // ton item actuel contient le gros tableau\n  const parsed = extractKarim1(container);\n  if (parsed) out.push({ json: parsed });\n}\nif (out.length === 0) {\n  throw new Error('Impossible de trouver result.output.karim_1 dans l’entrée.');\n}\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        16
+      ],
+      "id": "f6a3fdc3-fb65-4a89-8f95-491abfe08ed5",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Unstract1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Unstract1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bea2449a-40e1-418a-9e8e-6c5fa8334b64",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e97e981b4ba241b9fd3480bf994f9f76df42e7c9d265f7e412c77a35e977d66b"
+  },
+  "id": "5QrRzZOXQa50YxD0",
+  "tags": []
+}

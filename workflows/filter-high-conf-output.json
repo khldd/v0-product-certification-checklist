@@ -1,0 +1,1110 @@
+[
+  {
+    "success": true,
+    "auto_fusions": [
+      {
+        "fusion_id": "fusion_1_0_1762830868425",
+        "batch_number": 1,
+        "batch_id": "batch_1762830868424",
+        "timestamp": "2025-11-11T03:14:28.425Z",
+        "fusion_decision": {
+          "can_fuse": true,
+          "confidence_score": 95,
+          "confidence_level": "very_high",
+          "should_auto_apply": true,
+          "explanation": "Both items ask for the auditor's certification proposal with only slight wording differences regarding the levels of non-conformities preventing certification; they share identical audit purpose and options."
+        },
+        "result": {
+          "status": "fused",
+          "merged_item": {
+            "id": "fusion.h.l.auditeur-proposition-certification",
+            "section": "H. Conclusions / L. Proposition de l'auditeur à l'organisme certificateur",
+            "sous_section": null,
+            "question": "Proposition de l'auditeur à l'organisme certificateur, incluant les non-conformités de niveaux B, C ou D à régler avant certification",
+            "status": null,
+            "options": [
+              {
+                "label": "L'auditeur propose la certification",
+                "source": "both",
+                "original_doc1": "L'auditeur propose la certification",
+                "original_doc2": "L'auditeur propose la certification",
+                "checked": null
+              },
+              {
+                "label": "L'auditeur ne propose pas la certification, parce que les non-conformités de niveau B, C ou D suivantes sont à régler et à contrôler par ProCert avant la certification",
+                "source": "both",
+                "original_doc1": "L'auditeur ne propose pas la certification, parce que les non-conformités de niveau B, C ou D suivantes sont à régler et à contrôler par ProCert avant la certification",
+                "original_doc2": "L'auditeur ne propose pas la certification, parce que les non-conformités de niveau B et/ou D suivantes sont à régler et à contrôler par ProCert avant la certification",
+                "checked": null
+              }
+            ],
+            "notes": "Doc1: null | Doc2: En cas de déviation de niveau de sanction C, l'auditeur doit immédiatement en informer l'organisme de certification.",
+            "page": "doc1: 7, doc2: 6",
+            "sources": {
+              "doc1": {
+                "id": "h.proposition-de-l'auditeur-à-l'organisme-certificateur",
+                "section": "H. Conclusions",
+                "question": "Proposition de l'auditeur à l'organisme certificateur"
+              },
+              "doc2": {
+                "id": "l.proposition-de-l'auditeur-a-l-organisme-certificateur",
+                "section": "L. Proposition de l'auditeur à l'organisme certificateur",
+                "question": "Proposition de l'auditeur à l'organisme certificateur"
+              }
+            }
+          },
+          "action": "Use this fused item to represent both original items"
+        },
+        "doc1_items": [
+          {
+            "id": "h.proposition-de-l'auditeur-à-l'organisme-certificateur",
+            "page": 7,
+            "label": "Proposition de l'auditeur à l'organisme certificateur",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "L'auditeur propose la certification"
+              },
+              {
+                "label": "L'auditeur ne propose pas la certification, parce que les non-conformités de niveau B, C ou D suivantes sont à régler et à contrôler par ProCert avant la certification"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "H. Conclusions",
+            "section_letter": "H",
+            "section_title": "Conclusions",
+            "question": "Proposition de l'auditeur à l'organisme certificateur"
+          }
+        ],
+        "doc2_items": [
+          {
+            "id": "l.proposition-de-l-auditeur-a-l-organisme-certificateur",
+            "page": 6,
+            "label": "Proposition de l'auditeur à l'organisme certificateur",
+            "notes": "En cas de déviation de niveau de sanction C, l'auditeur doit immédiatement en informer l'organisme de certification.",
+            "status": null,
+            "options": [
+              {
+                "label": "L'auditeur propose la certification"
+              },
+              {
+                "label": "L'auditeur ne propose pas la certification, parce que les non-conformités de niveau B et/ou D suivantes sont à régler et à contrôler par ProCert avant la certification"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "L. Proposition de l'auditeur à l'organisme certificateur",
+            "section_letter": "L",
+            "section_title": "Proposition de l'auditeur à l'organisme certificateur",
+            "question": "Proposition de l'auditeur à l'organisme certificateur"
+          }
+        ],
+        "metadata": {
+          "ai_agent": "batch-fusion-analyzer",
+          "model": "gpt-4o",
+          "processed_at": "2025-11-11T03:14:28.425Z",
+          "batch_info": {
+            "batch_number": 1,
+            "batch_id": "batch_1762830868424"
+          }
+        }
+      },
+      {
+        "fusion_id": "fusion_1_1_1762830868425",
+        "batch_number": 1,
+        "batch_id": "batch_1762830868424",
+        "timestamp": "2025-11-11T03:14:28.425Z",
+        "fusion_decision": {
+          "can_fuse": false,
+          "confidence_score": 40,
+          "confidence_level": "low",
+          "should_auto_apply": false,
+          "explanation": "The first item checks that a quantitative control of flows was performed and is correct; the second verifies specific BS requirements for flow control. Different scopes and audit purposes suggest not fusing."
+        },
+        "result": {
+          "status": "not_fusable",
+          "merged_item": null,
+          "action": "Keep items separate - they represent different requirements"
+        },
+        "doc1_items": [
+          {
+            "id": "g.un-contrôle-quantitatif-des-flux",
+            "page": 6,
+            "label": "Un contrôle quantitatif des flux a été réalisé et est correct",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "a été réalisé et est correct"
+              },
+              {
+                "label": "a été réalisé mais n'est pas correct"
+              },
+              {
+                "label": "n'a pas été réalisé (justification)"
+              }
+            ],
+            "references": [
+              "RNE"
+            ],
+            "subsection": null,
+            "section": "G. Traçabilité quantitative",
+            "section_letter": "G",
+            "section_title": "Traçabilité quantitative",
+            "question": "Un contrôle quantitatif des flux a été réalisé et est correct"
+          }
+        ],
+        "doc2_items": [
+          {
+            "id": "h.les-exigences-specifiques-de-bs-pour-le-controle-des-flux",
+            "page": 5,
+            "label": "Les exigences spécifiques de BS pour le contrôle des flux",
+            "notes": null,
+            "status": "RN",
+            "options": [
+              {
+                "label": "sont respectées"
+              },
+              {
+                "label": "ne sont pas respectées"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "H. Contrôle des flux",
+            "section_letter": "H",
+            "section_title": "Contrôle des flux",
+            "question": "Les exigences spécifiques de BS pour le contrôle des flux"
+          }
+        ],
+        "metadata": {
+          "ai_agent": "batch-fusion-analyzer",
+          "model": "gpt-4o",
+          "processed_at": "2025-11-11T03:14:28.425Z",
+          "batch_info": {
+            "batch_number": 1,
+            "batch_id": "batch_1762830868424"
+          }
+        }
+      },
+      {
+        "fusion_id": "fusion_1_3_1762830868425",
+        "batch_number": 1,
+        "batch_id": "batch_1762830868424",
+        "timestamp": "2025-11-11T03:14:28.425Z",
+        "fusion_decision": {
+          "can_fuse": false,
+          "confidence_score": 40,
+          "confidence_level": "low",
+          "should_auto_apply": false,
+          "explanation": "One item covers cleaning, disinfection and pest control meeting bio directives including documentation; the other focuses only on measures against parasites with reference to a specific article. Related but distinct checks."
+        },
+        "result": {
+          "status": "not_fusable",
+          "merged_item": null,
+          "action": "Keep items separate - they represent different requirements"
+        },
+        "doc1_items": [
+          {
+            "id": "c.le-nettoyage-la-désinfection-et-la-lutte-contre-les-nuisibles",
+            "page": 4,
+            "label": "Le nettoyage, la désinfection et la lutte contre les nuisibles respectent les directives bio intégralement (les mesures sont documentées)",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "intégralement (les mesures sont documentées)"
+              },
+              {
+                "label": "en partie ou pas du tout"
+              },
+              {
+                "label": "na - pas de mesure spéciale nécessaire"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "C. Procédé de préparation",
+            "section_letter": "C",
+            "section_title": "Procédé de préparation",
+            "question": "Le nettoyage, la désinfection et la lutte contre les nuisibles respectent les directives bio intégralement (les mesures sont documentées)"
+          }
+        ],
+        "doc2_items": [
+          {
+            "id": "e.les-mesures-concernant-la-lutte-contre-les-parasites",
+            "page": 3,
+            "label": "Les mesures concernant la lutte contre les parasites",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "sont documentées et remplissent les directives/exigences de l'article 1.12"
+              },
+              {
+                "label": "Ne sont pas documentées et/ou ne remplissent pas les directives/exigences"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "E. Lutte contre les parasites",
+            "section_letter": "E",
+            "section_title": "Lutte contre les parasites",
+            "question": "Les mesures concernant la lutte contre les parasites"
+          }
+        ],
+        "metadata": {
+          "ai_agent": "batch-fusion-analyzer",
+          "model": "gpt-4o",
+          "processed_at": "2025-11-11T03:14:28.425Z",
+          "batch_info": {
+            "batch_number": 1,
+            "batch_id": "batch_1762830868424"
+          }
+        }
+      },
+      {
+        "fusion_id": "fusion_1_5_1762830868425",
+        "batch_number": 1,
+        "batch_id": "batch_1762830868424",
+        "timestamp": "2025-11-11T03:14:28.425Z",
+        "fusion_decision": {
+          "can_fuse": false,
+          "confidence_score": 40,
+          "confidence_level": "low",
+          "should_auto_apply": false,
+          "explanation": "First item verifies if reception control activities are done (with proof); second item details what reception control includes regarding Bourgeon quality. Overlapping but not fully equivalent."
+        },
+        "result": {
+          "status": "not_fusable",
+          "merged_item": null,
+          "action": "Keep items separate - they represent different requirements"
+        },
+        "doc1_items": [
+          {
+            "id": "c.le-contrôle-à-réception",
+            "page": 4,
+            "label": "Le contrôle à réception (bulletin de livraison, étiquettes, conditionnement) est effectué (enregistrement, preuve ?)",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "est effectué (enregistrement, preuve ?)"
+              },
+              {
+                "label": "n'est pas effectué"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "C. Procédé de préparation",
+            "section_letter": "C",
+            "section_title": "Procédé de préparation",
+            "question": "Le contrôle à réception (bulletin de livraison, étiquettes, conditionnement) est effectué (enregistrement, preuve ?)"
+          }
+        ],
+        "doc2_items": [
+          {
+            "id": "b.le-controle-a-la-reception-comprend",
+            "page": 1,
+            "label": "Le contrôle à la réception comprend",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "la vérification de la qualité Bourgeon requise c .- à-d. la décl. correcte des produits, doc. d'accompagnement, origine incl."
+              },
+              {
+                "label": "Aucune vérification de la qualité Bourgeon"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "B. Achat des matières premières et contrôle à la réception",
+            "section_letter": "B",
+            "section_title": "Achat des matières premières et contrôle à la réception",
+            "question": "Le contrôle à la réception comprend"
+          }
+        ],
+        "metadata": {
+          "ai_agent": "batch-fusion-analyzer",
+          "model": "gpt-4o",
+          "processed_at": "2025-11-11T03:14:28.425Z",
+          "batch_info": {
+            "batch_number": 1,
+            "batch_id": "batch_1762830868424"
+          }
+        }
+      },
+      {
+        "fusion_id": "fusion_1_2_1762830868425",
+        "batch_number": 1,
+        "batch_id": "batch_1762830868424",
+        "timestamp": "2025-11-11T03:14:28.425Z",
+        "fusion_decision": {
+          "can_fuse": false,
+          "confidence_score": 35,
+          "confidence_level": "very_low",
+          "should_auto_apply": false,
+          "explanation": "One item verifies existence of a current organic products list; the other concerns the ProCert product list with contract modification requirements. Different content and audit scopes."
+        },
+        "result": {
+          "status": "not_fusable",
+          "merged_item": null,
+          "action": "Keep items separate - they represent different requirements"
+        },
+        "doc1_items": [
+          {
+            "id": "b.une-liste-actuelle-des-produits-bio",
+            "page": 2,
+            "label": "Une liste actuelle des produits bio existe (evtl intégrée à la liste générale des articles)",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "existe (evtl intégrée à la liste générale des articles)"
+              },
+              {
+                "label": "n'existe pas"
+              }
+            ],
+            "references": [
+              "RNE"
+            ],
+            "subsection": null,
+            "section": "B. Informations sur les produits biologiques",
+            "section_letter": "B",
+            "section_title": "Informations sur les produits biologiques",
+            "question": "Une liste actuelle des produits bio existe (evtl intégrée à la liste générale des articles)"
+          }
+        ],
+        "doc2_items": [
+          {
+            "id": "a.la-liste-des-produits-procert",
+            "page": 1,
+            "label": "La liste des produits ProCert",
+            "notes": "Le preneur de licence doit annoncer les modifications de l'annexe au contrat de licence à : verarbeitung@bio-suisse.ch",
+            "status": null,
+            "options": [
+              {
+                "label": "est actuelle et correspond à la propre liste d'articles"
+              },
+              {
+                "label": "n'est pas actuelle / ne correspond pas à la liste d'articles"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "A. Contrat de licence y c. annexe",
+            "section_letter": "A",
+            "section_title": "Contrat de licence y c. annexe",
+            "question": "La liste des produits ProCert"
+          }
+        ],
+        "metadata": {
+          "ai_agent": "batch-fusion-analyzer",
+          "model": "gpt-4o",
+          "processed_at": "2025-11-11T03:14:28.425Z",
+          "batch_info": {
+            "batch_number": 1,
+            "batch_id": "batch_1762830868424"
+          }
+        }
+      },
+      {
+        "fusion_id": "fusion_1_4_1762830868425",
+        "batch_number": 1,
+        "batch_id": "batch_1762830868424",
+        "timestamp": "2025-11-11T03:14:28.425Z",
+        "fusion_decision": {
+          "can_fuse": false,
+          "confidence_score": 35,
+          "confidence_level": "very_low",
+          "should_auto_apply": false,
+          "explanation": "The first item checks correct marking of products with ≥95% organic ingredients in declaration and ingredient list; the second concerns general ingredient declaration matching the recipe. Related but different specific focus."
+        },
+        "result": {
+          "status": "not_fusable",
+          "merged_item": null,
+          "action": "Keep items separate - they represent different requirements"
+        },
+        "doc1_items": [
+          {
+            "id": "b.les-produits-avec-95%-d'ingrédients-bio-sont-correctement",
+            "page": 2,
+            "label": "Les produits avec ≥ 95% d'ingrédients bio sont marqués dans la déclaration et dans la liste des ingrédients correctement",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "correctement"
+              },
+              {
+                "label": "pas correctement"
+              }
+            ],
+            "references": [
+              "Ord. bio art. 18 et 21"
+            ],
+            "subsection": null,
+            "section": "B. Informations sur les produits biologiques",
+            "section_letter": "B",
+            "section_title": "Informations sur les produits biologiques",
+            "question": "Les produits avec ≥ 95% d'ingrédients bio sont marqués dans la déclaration et dans la liste des ingrédients correctement"
+          }
+        ],
+        "doc2_items": [
+          {
+            "id": "c.la-declaration-des-ingredients",
+            "page": 1,
+            "label": "La déclaration des ingrédients",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "correspond à la recette"
+              },
+              {
+                "label": "ne correspond pas à la recette"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "C. Matériaux d'emballage et déclaration",
+            "section_letter": "C",
+            "section_title": "Matériaux d'emballage et déclaration",
+            "question": "La déclaration des ingrédients"
+          }
+        ],
+        "metadata": {
+          "ai_agent": "batch-fusion-analyzer",
+          "model": "gpt-4o",
+          "processed_at": "2025-11-11T03:14:28.425Z",
+          "batch_info": {
+            "batch_number": 1,
+            "batch_id": "batch_1762830868424"
+          }
+        }
+      },
+      {
+        "fusion_id": "fusion_1_6_1762830868425",
+        "batch_number": 1,
+        "batch_id": "batch_1762830868424",
+        "timestamp": "2025-11-11T03:14:28.425Z",
+        "fusion_decision": {
+          "can_fuse": false,
+          "confidence_score": 35,
+          "confidence_level": "very_low",
+          "should_auto_apply": false,
+          "explanation": "Checking correct marking of products with ≥95% organic ingredients versus the ProCert product list status; these address different audit requirements and documentation."
+        },
+        "result": {
+          "status": "not_fusable",
+          "merged_item": null,
+          "action": "Keep items separate - they represent different requirements"
+        },
+        "doc1_items": [
+          {
+            "id": "b.les-produits-avec-95%-d'ingrédients-bio-sont-correctement",
+            "page": 2,
+            "label": "Les produits avec ≥ 95% d'ingrédients bio sont marqués dans la déclaration et dans la liste des ingrédients correctement",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "correctement"
+              },
+              {
+                "label": "pas correctement"
+              }
+            ],
+            "references": [
+              "Ord. bio art. 18 et 21"
+            ],
+            "subsection": null,
+            "section": "B. Informations sur les produits biologiques",
+            "section_letter": "B",
+            "section_title": "Informations sur les produits biologiques",
+            "question": "Les produits avec ≥ 95% d'ingrédients bio sont marqués dans la déclaration et dans la liste des ingrédients correctement"
+          }
+        ],
+        "doc2_items": [
+          {
+            "id": "a.la-liste-des-produits-procert",
+            "page": 1,
+            "label": "La liste des produits ProCert",
+            "notes": "Le preneur de licence doit annoncer les modifications de l'annexe au contrat de licence à : verarbeitung@bio-suisse.ch",
+            "status": null,
+            "options": [
+              {
+                "label": "est actuelle et correspond à la propre liste d'articles"
+              },
+              {
+                "label": "n'est pas actuelle / ne correspond pas à la liste d'articles"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "A. Contrat de licence y c. annexe",
+            "section_letter": "A",
+            "section_title": "Contrat de licence y c. annexe",
+            "question": "La liste des produits ProCert"
+          }
+        ],
+        "metadata": {
+          "ai_agent": "batch-fusion-analyzer",
+          "model": "gpt-4o",
+          "processed_at": "2025-11-11T03:14:28.425Z",
+          "batch_info": {
+            "batch_number": 1,
+            "batch_id": "batch_1762830868424"
+          }
+        }
+      },
+      {
+        "fusion_id": "fusion_1_7_1762830868425",
+        "batch_number": 1,
+        "batch_id": "batch_1762830868424",
+        "timestamp": "2025-11-11T03:14:28.425Z",
+        "fusion_decision": {
+          "can_fuse": false,
+          "confidence_score": 30,
+          "confidence_level": "very_low",
+          "should_auto_apply": false,
+          "explanation": "One item relates to existence or absence of current organic product recipes; the other checks general compliance with Bio Suisse product-specific requirements. Different audit requirements."
+        },
+        "result": {
+          "status": "not_fusable",
+          "merged_item": null,
+          "action": "Keep items separate - they represent different requirements"
+        },
+        "doc1_items": [
+          {
+            "id": "b.les-recettes-actuelles-des-produits-bio",
+            "page": 2,
+            "label": "Les recettes actuelles des produits bio n'existent pas (justifier)",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "n'existent pas (justifier)"
+              },
+              {
+                "label": "existent et"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "B. Informations sur les produits biologiques",
+            "section_letter": "B",
+            "section_title": "Informations sur les produits biologiques",
+            "question": "Les recettes actuelles des produits bio n'existent pas (justifier)"
+          }
+        ],
+        "doc2_items": [
+          {
+            "id": "d.les-exigences-generales-des-exigences-specifiques",
+            "page": 2,
+            "label": "Les exigences générales des exigences spécifiques relatives aux produits (exigences actuelles de Bio Suisse)",
+            "notes": null,
+            "status": "RN",
+            "options": [
+              {
+                "label": "sont respectées"
+              },
+              {
+                "label": "ne sont pas respectées"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "D. Recettes et transformation",
+            "section_letter": "D",
+            "section_title": "Recettes et transformation",
+            "question": "Les exigences générales des exigences spécifiques relatives aux produits (exigences actuelles de Bio Suisse)"
+          }
+        ],
+        "metadata": {
+          "ai_agent": "batch-fusion-analyzer",
+          "model": "gpt-4o",
+          "processed_at": "2025-11-11T03:14:28.425Z",
+          "batch_info": {
+            "batch_number": 1,
+            "batch_id": "batch_1762830868424"
+          }
+        }
+      },
+      {
+        "fusion_id": "fusion_1_8_1762830868425",
+        "batch_number": 1,
+        "batch_id": "batch_1762830868424",
+        "timestamp": "2025-11-11T03:14:28.425Z",
+        "fusion_decision": {
+          "can_fuse": false,
+          "confidence_score": 30,
+          "confidence_level": "very_low",
+          "should_auto_apply": false,
+          "explanation": "One item checks availability and adequacy of production diagrams; the other verifies conformity of transformation processes to directives. Related but different checklist items and scopes."
+        },
+        "result": {
+          "status": "not_fusable",
+          "merged_item": null,
+          "action": "Keep items separate - they represent different requirements"
+        },
+        "doc1_items": [
+          {
+            "id": "c.les-diagrammes-de-production-pour-les-produits-fabriqués-dans-l'entreprise",
+            "page": 4,
+            "label": "Les diagrammes de production pour les produits fabriqués dans l'entreprise ne sont pas tous disponibles, sont insuffisants ou ne respectent pas les exigences des directives bio",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "sont tous disponibles, actuels, suffisants et respectent les exigences des directives bio"
+              },
+              {
+                "label": "ne sont pas tous disponibles, sont insuffisants ou ne respectent pas les exigences des directives bio"
+              }
+            ],
+            "references": [
+              "RNE"
+            ],
+            "subsection": null,
+            "section": "C. Procédé de préparation",
+            "section_letter": "C",
+            "section_title": "Procédé de préparation",
+            "question": "Les diagrammes de production pour les produits fabriqués dans l'entreprise ne sont pas tous disponibles, sont insuffisants ou ne respectent pas les exigences des directives bio"
+          }
+        ],
+        "doc2_items": [
+          {
+            "id": "g.les-procedes-de-transformation-utilises-pour-le-groupe-de-produits-concerne-sont-ils-conformes-aux-directives",
+            "page": 5,
+            "label": "Les procédés de transformation utilisés pour le groupe de produits concerne sont-ils conformes aux directives (pour tous les produits) :",
+            "notes": "Les directives Bio Suisse réglementent les procédés qui peuvent être utilisés par groupe de produits.",
+            "status": "RN",
+            "options": [
+              {
+                "label": "Oui"
+              },
+              {
+                "label": "Non"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "G. Priorités de contrôle (en plus ; spécifiques à l'année de contrôle)",
+            "section_letter": "G",
+            "section_title": "Priorités de contrôle (en plus ; spécifiques à l'année de contrôle)",
+            "question": "Les procédés de transformation utilisés pour le groupe de produits concerne sont-ils conformes aux directives (pour tous les produits) :"
+          }
+        ],
+        "metadata": {
+          "ai_agent": "batch-fusion-analyzer",
+          "model": "gpt-4o",
+          "processed_at": "2025-11-11T03:14:28.425Z",
+          "batch_info": {
+            "batch_number": 1,
+            "batch_id": "batch_1762830868424"
+          }
+        }
+      },
+      {
+        "fusion_id": "fusion_1_9_1762830868425",
+        "batch_number": 1,
+        "batch_id": "batch_1762830868424",
+        "timestamp": "2025-11-11T03:14:28.425Z",
+        "fusion_decision": {
+          "can_fuse": false,
+          "confidence_score": 30,
+          "confidence_level": "very_low",
+          "should_auto_apply": false,
+          "explanation": "One item concerns absence or presence of current organic product recipes; the other is about the ProCert product list currency and correspondence. Different audit topics."
+        },
+        "result": {
+          "status": "not_fusable",
+          "merged_item": null,
+          "action": "Keep items separate - they represent different requirements"
+        },
+        "doc1_items": [
+          {
+            "id": "b.les-recettes-actuelles-des-produits-bio",
+            "page": 2,
+            "label": "Les recettes actuelles des produits bio n'existent pas (justifier)",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "n'existent pas (justifier)"
+              },
+              {
+                "label": "existent et"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "B. Informations sur les produits biologiques",
+            "section_letter": "B",
+            "section_title": "Informations sur les produits biologiques",
+            "question": "Les recettes actuelles des produits bio n'existent pas (justifier)"
+          }
+        ],
+        "doc2_items": [
+          {
+            "id": "d.les-ingredients-des-recettes",
+            "page": 2,
+            "label": "Les ingrédients des recettes",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "correspondent aux exigences spécifiques des produits"
+              },
+              {
+                "label": "ne répondent pas aux exigences spécifiques aux produits"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "D. Recettes et transformation",
+            "section_letter": "D",
+            "section_title": "Recettes et transformation",
+            "question": "Les ingrédients des recettes"
+          }
+        ],
+        "metadata": {
+          "ai_agent": "batch-fusion-analyzer",
+          "model": "gpt-4o",
+          "processed_at": "2025-11-11T03:14:28.425Z",
+          "batch_info": {
+            "batch_number": 1,
+            "batch_id": "batch_1762830868424"
+          }
+        }
+      },
+      {
+        "fusion_id": "fusion_1_10_1762830868425",
+        "batch_number": 1,
+        "batch_id": "batch_1762830868424",
+        "timestamp": "2025-11-11T03:14:28.425Z",
+        "fusion_decision": {
+          "can_fuse": false,
+          "confidence_score": 30,
+          "confidence_level": "very_low",
+          "should_auto_apply": false,
+          "explanation": "One item verifies compliance of non-agricultural ingredients in recipes according to specific ordinances; the other checks ingredients meeting specific Bio Suisse requirements. Similar domain but different focus and audit criteria."
+        },
+        "result": {
+          "status": "not_fusable",
+          "merged_item": null,
+          "action": "Keep items separate - they represent different requirements"
+        },
+        "doc1_items": [
+          {
+            "id": "b.les-produits-avec-95%-d'ingrédients-bio",
+            "page": 2,
+            "label": "Les produits avec < 95% d'ingrédients bio ne sont pas marqués avec bio dans la déclaration",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "ne sont pas marqués avec bio dans la déclaration"
+              },
+              {
+                "label": "sont marqués avec bio"
+              }
+            ],
+            "references": [
+              "Ord. bio art. 18 et 21"
+            ],
+            "subsection": null,
+            "section": "B. Informations sur les produits biologiques",
+            "section_letter": "B",
+            "section_title": "Informations sur les produits biologiques",
+            "question": "Les produits avec < 95% d'ingrédients bio ne sont pas marqués avec bio dans la déclaration"
+          }
+        ],
+        "doc2_items": [
+          {
+            "id": "e.dans-la-mesure-ou-des-traitements-avec-des-produits-selon-le-ch-1-12-de-l-annexe-3-ont-ete-necessaires",
+            "page": 3,
+            "label": "Dans la mesure où des traitements avec des produits selon le ch. 1.12 de l'annexe 3 ont été nécessaires, et qu'ils n'ont pas été effectués par une ELA, le rapport annuel",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "est établi et soumis à Bio Suisse"
+              },
+              {
+                "label": "n'est pas établi et/ou (pas encore) soumis à Bio Suisse"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "E. Lutte contre les parasites",
+            "section_letter": "E",
+            "section_title": "Lutte contre les parasites",
+            "question": "Dans la mesure où des traitements avec des produits selon le ch. 1.12 de l'annexe 3 ont été nécessaires, et qu'ils n'ont pas été effectués par une ELA, le rapport annuel"
+          }
+        ],
+        "metadata": {
+          "ai_agent": "batch-fusion-analyzer",
+          "model": "gpt-4o",
+          "processed_at": "2025-11-11T03:14:28.425Z",
+          "batch_info": {
+            "batch_number": 1,
+            "batch_id": "batch_1762830868424"
+          }
+        }
+      },
+      {
+        "fusion_id": "fusion_1_11_1762830868425",
+        "batch_number": 1,
+        "batch_id": "batch_1762830868424",
+        "timestamp": "2025-11-11T03:14:28.425Z",
+        "fusion_decision": {
+          "can_fuse": false,
+          "confidence_score": 25,
+          "confidence_level": "very_low",
+          "should_auto_apply": false,
+          "explanation": "One item checks correct marking of organic ingredients in the ingredient list; the other checks if ingredient declaration matches the recipe. Related but not fully overlapping audit requirements."
+        },
+        "result": {
+          "status": "not_fusable",
+          "merged_item": null,
+          "action": "Keep items separate - they represent different requirements"
+        },
+        "doc1_items": [
+          {
+            "id": "b.dans-la-liste-des-ingrédients-les-ingrédients-bio",
+            "page": 2,
+            "label": "Dans la liste des ingrédients les ingrédients bio sont marqués correctement",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "sont marqués correctement"
+              },
+              {
+                "label": "ne sont pas marqués correctement"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "B. Informations sur les produits biologiques",
+            "section_letter": "B",
+            "section_title": "Informations sur les produits biologiques",
+            "question": "Dans la liste des ingrédients les ingrédients bio sont marqués correctement"
+          }
+        ],
+        "doc2_items": [
+          {
+            "id": "c.la-declaration-des-ingredients",
+            "page": 1,
+            "label": "La déclaration des ingrédients",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "correspond à la recette"
+              },
+              {
+                "label": "ne correspond pas à la recette"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "C. Matériaux d'emballage et déclaration",
+            "section_letter": "C",
+            "section_title": "Matériaux d'emballage et déclaration",
+            "question": "La déclaration des ingrédients"
+          }
+        ],
+        "metadata": {
+          "ai_agent": "batch-fusion-analyzer",
+          "model": "gpt-4o",
+          "processed_at": "2025-11-11T03:14:28.425Z",
+          "batch_info": {
+            "batch_number": 1,
+            "batch_id": "batch_1762830868424"
+          }
+        }
+      },
+      {
+        "fusion_id": "fusion_1_12_1762830868425",
+        "batch_number": 1,
+        "batch_id": "batch_1762830868424",
+        "timestamp": "2025-11-11T03:14:28.425Z",
+        "fusion_decision": {
+          "can_fuse": false,
+          "confidence_score": 25,
+          "confidence_level": "very_low",
+          "should_auto_apply": false,
+          "explanation": "Checking correct marking of organic ingredients versus compliance of recipe ingredients with product-specific requirements are different requirements."
+        },
+        "result": {
+          "status": "not_fusable",
+          "merged_item": null,
+          "action": "Keep items separate - they represent different requirements"
+        },
+        "doc1_items": [
+          {
+            "id": "b.dans-la-liste-des-ingrédients-les-ingrédients-bio",
+            "page": 2,
+            "label": "Dans la liste des ingrédients les ingrédients bio sont marqués correctement",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "sont marqués correctement"
+              },
+              {
+                "label": "ne sont pas marqués correctement"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "B. Informations sur les produits biologiques",
+            "section_letter": "B",
+            "section_title": "Informations sur les produits biologiques",
+            "question": "Dans la liste des ingrédients les ingrédients bio sont marqués correctement"
+          }
+        ],
+        "doc2_items": [
+          {
+            "id": "d.les-ingredients-des-recettes",
+            "page": 2,
+            "label": "Les ingrédients des recettes",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "correspondent aux exigences spécifiques des produits"
+              },
+              {
+                "label": "ne répondent pas aux exigences spécifiques aux produits"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "D. Recettes et transformation",
+            "section_letter": "D",
+            "section_title": "Recettes et transformation",
+            "question": "Les ingrédients des recettes"
+          }
+        ],
+        "metadata": {
+          "ai_agent": "batch-fusion-analyzer",
+          "model": "gpt-4o",
+          "processed_at": "2025-11-11T03:14:28.425Z",
+          "batch_info": {
+            "batch_number": 1,
+            "batch_id": "batch_1762830868424"
+          }
+        }
+      },
+      {
+        "fusion_id": "fusion_1_13_1762830868425",
+        "batch_number": 1,
+        "batch_id": "batch_1762830868424",
+        "timestamp": "2025-11-11T03:14:28.426Z",
+        "fusion_decision": {
+          "can_fuse": false,
+          "confidence_score": 25,
+          "confidence_level": "very_low",
+          "should_auto_apply": false,
+          "explanation": "One item concerns existence of organic product recipes; the other concerns currency and matching of the ProCert product list. Different audit focus."
+        },
+        "result": {
+          "status": "not_fusable",
+          "merged_item": null,
+          "action": "Keep items separate - they represent different requirements"
+        },
+        "doc1_items": [
+          {
+            "id": "b.les-recettes-actuelles-des-produits-bio",
+            "page": 2,
+            "label": "Les recettes actuelles des produits bio n'existent pas (justifier)",
+            "notes": null,
+            "status": null,
+            "options": [
+              {
+                "label": "n'existent pas (justifier)"
+              },
+              {
+                "label": "existent et"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "B. Informations sur les produits biologiques",
+            "section_letter": "B",
+            "section_title": "Informations sur les produits biologiques",
+            "question": "Les recettes actuelles des produits bio n'existent pas (justifier)"
+          }
+        ],
+        "doc2_items": [
+          {
+            "id": "a.la-liste-des-produits-procert",
+            "page": 1,
+            "label": "La liste des produits ProCert",
+            "notes": "Le preneur de licence doit annoncer les modifications de l'annexe au contrat de licence à : verarbeitung@bio-suisse.ch",
+            "status": null,
+            "options": [
+              {
+                "label": "est actuelle et correspond à la propre liste d'articles"
+              },
+              {
+                "label": "n'est pas actuelle / ne correspond pas à la liste d'articles"
+              }
+            ],
+            "references": [],
+            "subsection": null,
+            "section": "A. Contrat de licence y c. annexe",
+            "section_letter": "A",
+            "section_title": "Contrat de licence y c. annexe",
+            "question": "La liste des produits ProCert"
+          }
+        ],
+        "metadata": {
+          "ai_agent": "batch-fusion-analyzer",
+          "model": "gpt-4o",
+          "processed_at": "2025-11-11T03:14:28.426Z",
+          "batch_info": {
+            "batch_number": 1,
+            "batch_id": "batch_1762830868424"
+          }
+        }
+      }
+    ],
+    "summary": {
+      "total_pairs_analyzed": 14,
+      "total_fusable": 1,
+      "total_not_fusable": 13,
+      "fusions_found": 14,
+      "confidence_threshold": 0,
+      "average_confidence": 37,
+      "confidence_breakdown": {
+        "very_high_90_plus": 1,
+        "high_75_to_89": 0,
+        "medium_55_to_74": 13
+      },
+      "sections_count": 2,
+      "processing_timestamp": "2025-11-11T03:14:28.440Z"
+    },
+    "sections_breakdown": [
+      {
+        "section_name": "Unknown Section",
+        "fusion_count": 13,
+        "avg_confidence": 32
+      },
+      {
+        "section_name": "H. Conclusions / L. Proposition de l'auditeur à l'organisme certificateur",
+        "fusion_count": 1,
+        "avg_confidence": 95
+      }
+    ]
+  }
+]

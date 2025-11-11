@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { exportFusionResultsAsPDF, exportFusionResultsAsTable, exportAsJSON, copyToClipboard } from "@/lib/export-utils"
+import { getConfidenceBgColor, getConfidenceColor, getConfidenceDescription } from "@/lib/utils"
 
 interface FusionResultsListProps {
   results: any[]
@@ -32,23 +33,11 @@ export default function FusionResultsList({ results, onClear }: FusionResultsLis
 
   const getResultBadge = (type: string) => {
     switch (type) {
-      case 'ai_fused': return { text: 'AI Fused', color: 'bg-green-100 text-green-800 border-green-300' }
-      case 'manual': return { text: 'Manual', color: 'bg-blue-100 text-blue-800 border-blue-300' }
-      case 'kept_separate': return { text: 'Separate', color: 'bg-orange-100 text-orange-800 border-orange-300' }
-      default: return { text: 'Unknown', color: 'bg-gray-100 text-gray-800 border-gray-300' }
+      case 'ai_fused': return { text: 'AI Fused', color: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-300 dark:border-green-700' }
+      case 'manual': return { text: 'Manual', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 border-blue-300 dark:border-blue-700' }
+      case 'kept_separate': return { text: 'Separate', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 border-orange-300 dark:border-orange-700' }
+      default: return { text: 'Unknown', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400 border-gray-300 dark:border-gray-700' }
     }
-  }
-
-  const getConfidenceBadge = (level?: string) => {
-    if (!level) return null
-    const colors = {
-      'very_high': 'bg-green-100 text-green-700 border-green-300',
-      'high': 'bg-blue-100 text-blue-700 border-blue-300',
-      'medium': 'bg-yellow-100 text-yellow-700 border-yellow-300',
-      'low': 'bg-orange-100 text-orange-700 border-orange-300',
-      'very_low': 'bg-red-100 text-red-700 border-red-300',
-    }
-    return colors[level as keyof typeof colors] || colors.medium
   }
 
   if (results.length === 0) {
@@ -112,9 +101,11 @@ export default function FusionResultsList({ results, onClear }: FusionResultsLis
                         <span className={`text-xs px-2 py-0.5 rounded border font-semibold ${badge.color}`}>
                           {badge.text}
                         </span>
-                        {result.confidence_level && (
-                          <span className={`text-xs px-2 py-0.5 rounded border font-semibold ${getConfidenceBadge(result.confidence_level)}`}>
-                            {result.confidence}% {result.confidence_level}
+                        {result.confidence !== undefined && result.confidence_level && (
+                          <span className={`text-xs px-2 py-0.5 rounded border font-semibold ${getConfidenceBgColor(result.confidence)}`}>
+                            <span className={getConfidenceColor(result.confidence)}>
+                              {result.confidence}%
+                            </span> • {getConfidenceDescription(result.confidence_level)}
                           </span>
                         )}
                         <span className="text-xs text-slate-400">
@@ -211,6 +202,53 @@ export default function FusionResultsList({ results, onClear }: FusionResultsLis
                           <span className="text-xs font-semibold text-slate-600">Notes:</span>
                           <div className="text-xs text-slate-700 mt-1 bg-yellow-50 p-2 rounded border border-yellow-200">
                             {result.merged_item.notes}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Source Provenance */}
+                      {result.merged_item.sources && (result.merged_item.sources.doc1 || result.merged_item.sources.doc2) && (
+                        <div className="mt-3 pt-3 border-t border-green-200">
+                          <div className="text-xs font-semibold text-slate-600 mb-2">Source Provenance</div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {result.merged_item.sources.doc1 && (
+                              <div className="bg-blue-50 p-2 rounded border border-blue-200">
+                                <div className="text-xs font-semibold text-blue-800 mb-1">Document 1 Source</div>
+                                <div className="text-xs text-slate-600 space-y-1">
+                                  {result.merged_item.sources.doc1.id && (
+                                    <div><strong>ID:</strong> {result.merged_item.sources.doc1.id}</div>
+                                  )}
+                                  {result.merged_item.sources.doc1.section && (
+                                    <div><strong>Section:</strong> {result.merged_item.sources.doc1.section}</div>
+                                  )}
+                                  {result.merged_item.sources.doc1.question && (
+                                    <div className="mt-1 p-1 bg-white rounded border border-blue-100">
+                                      <strong>Original:</strong> {result.merged_item.sources.doc1.question.substring(0, 100)}
+                                      {result.merged_item.sources.doc1.question.length > 100 && '...'}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                            {result.merged_item.sources.doc2 && (
+                              <div className="bg-red-50 p-2 rounded border border-red-200">
+                                <div className="text-xs font-semibold text-red-800 mb-1">Document 2 Source</div>
+                                <div className="text-xs text-slate-600 space-y-1">
+                                  {result.merged_item.sources.doc2.id && (
+                                    <div><strong>ID:</strong> {result.merged_item.sources.doc2.id}</div>
+                                  )}
+                                  {result.merged_item.sources.doc2.section && (
+                                    <div><strong>Section:</strong> {result.merged_item.sources.doc2.section}</div>
+                                  )}
+                                  {result.merged_item.sources.doc2.question && (
+                                    <div className="mt-1 p-1 bg-white rounded border border-red-100">
+                                      <strong>Original:</strong> {result.merged_item.sources.doc2.question.substring(0, 100)}
+                                      {result.merged_item.sources.doc2.question.length > 100 && '...'}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}

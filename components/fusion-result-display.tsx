@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { getConfidenceBgColor, getConfidenceColor, getConfidenceDescription } from "@/lib/utils"
+import { CheckCircle2, XCircle, AlertTriangle } from "lucide-react"
 
 interface FusionResultDisplayProps {
   fusionResponse: {
@@ -29,34 +31,21 @@ interface FusionResultDisplayProps {
   onKeepSeparate: () => void
 }
 
-export default function FusionResultDisplay({ 
-  fusionResponse, 
-  doc1Selected, 
+export default function FusionResultDisplay({
+  fusionResponse,
+  doc1Selected,
   doc2Selected,
   onAcceptFusion,
   onManualFuse,
-  onKeepSeparate 
+  onKeepSeparate
 }: FusionResultDisplayProps) {
   const [showDetails, setShowDetails] = useState(true)
 
-  const getConfidenceColor = (level: string) => {
-    switch (level) {
-      case 'very_high': return 'text-green-700 bg-green-100 border-green-300'
-      case 'high': return 'text-blue-700 bg-blue-100 border-blue-300'
-      case 'medium': return 'text-yellow-700 bg-yellow-100 border-yellow-300'
-      case 'low': return 'text-orange-700 bg-orange-100 border-orange-300'
-      default: return 'text-red-700 bg-red-100 border-red-300'
-    }
-  }
-
-  const getConfidenceIcon = (level: string) => {
-    switch (level) {
-      case 'very_high': return '✓✓'
-      case 'high': return '✓'
-      case 'medium': return '◐'
-      case 'low': return '⚠'
-      default: return '✗'
-    }
+  const getConfidenceIcon = (score: number) => {
+    if (score >= 90) return <CheckCircle2 className="w-6 h-6" />
+    if (score >= 75) return <CheckCircle2 className="w-6 h-6" />
+    if (score >= 60) return <AlertTriangle className="w-6 h-6" />
+    return <XCircle className="w-6 h-6" />
   }
 
   if (!fusionResponse.success) {
@@ -104,12 +93,20 @@ export default function FusionResultDisplay({
           </div>
 
           {/* Confidence Badge */}
-          <div className={`px-3 py-1 rounded-full border font-semibold text-sm flex items-center gap-2 ${
-            getConfidenceColor(fusion_decision.confidence_level)
+          <div className={`px-4 py-2 rounded-lg border-2 font-bold text-base flex items-center gap-2 ${
+            getConfidenceBgColor(fusion_decision.confidence_score)
           }`}>
-            <span>{getConfidenceIcon(fusion_decision.confidence_level)}</span>
-            <span>{fusion_decision.confidence_score}% Confidence</span>
-            <span className="text-xs opacity-75">({fusion_decision.confidence_level})</span>
+            <span className={getConfidenceColor(fusion_decision.confidence_score)}>
+              {getConfidenceIcon(fusion_decision.confidence_score)}
+            </span>
+            <div className="flex flex-col">
+              <span className={getConfidenceColor(fusion_decision.confidence_score)}>
+                {fusion_decision.confidence_score}%
+              </span>
+              <span className="text-xs font-normal opacity-75">
+                {getConfidenceDescription(fusion_decision.confidence_level)}
+              </span>
+            </div>
           </div>
         </div>
 
